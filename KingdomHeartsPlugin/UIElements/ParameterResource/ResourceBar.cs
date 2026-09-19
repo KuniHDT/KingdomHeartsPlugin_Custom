@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Numerics;
 using Dalamud.Game.ClientState.Objects.SubKinds;
@@ -76,8 +76,33 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
                 lengthRate = KingdomHeartsPlugin.Ui.Configuration.GpPerPixelLength;
             }
 
-            float lengthMultiplier;
+            // Initialization catch for animations
+            if (LastResource == 0 && ResourceValue > 0)
+            {
+                LastResource = ResourceValue;
+                SmoothCurrentResource = ResourceValue;
+                ResourceBeforeSpent = ResourceValue;
+                ResourceTemp = ResourceValue;
+            }
 
+            if (ResourceValue != LastResource)
+            {
+                _resourceAnimationTimer = KingdomHeartsPlugin.Ui.Configuration.ResourceAnimationDelay;
+
+                if (ResourceValue < LastResource)
+                {
+                    ResourceBeforeSpent = Math.Max(ResourceBeforeSpent, LastResource);
+                }
+                else if (ResourceValue > LastResource)
+                {
+                    ResourceTemp = Math.Min(ResourceTemp, LastResource);
+                }
+            }
+
+            UpdateResourceAnimations(ResourceValue, ResourceMax);
+            LastResource = ResourceValue;
+
+            float lengthMultiplier;
             if (KingdomHeartsPlugin.Ui.Configuration.ResourceLengthByLevel)
             {
                 int resourcePerLevel = ResourceType switch
@@ -88,13 +113,11 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
                     _ => 0
                 };
 
-                // Scale off the configured minimum visual length, adding configured Resource equivalent per level
                 float simulatedMax = minLength + (player.Level * resourcePerLevel);
                 lengthMultiplier = simulatedMax / (float)ResourceMax;
             }
             else
             {
-                // Standard min/max limits
                 lengthMultiplier = ResourceMax < minLength
                     ? minLength / (float)ResourceMax
                     : ResourceMax > maxLength
@@ -102,8 +125,54 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
                         : 1f;
             }
 
-            MaxResourceLength = (int)Math.Ceiling(ResourceMax / lengthRate * lengthMultiplier);
-            ResourceLength = (int)Math.Ceiling(ResourceValue / lengthRate * lengthMultiplier);
+            MaxResourceLength = (float)Math.Ceiling(ResourceMax / lengthRate * lengthMultiplier);
+            ResourceLength = (float)Math.Ceiling(SmoothCurrentResource / lengthRate * lengthMultiplier);
+            SpentResourceLength = (float)Math.Ceiling(ResourceBeforeSpent / lengthRate * lengthMultiplier);
+            TempResourceLength = (float)Math.Ceiling(ResourceTemp / lengthRate * lengthMultiplier);
+        }
+
+        private void UpdateResourceAnimations(uint currentResource, uint maxResource)
+        {
+            float smoothStep = maxResource * 0.35f * KingdomHeartsPlugin.UiSpeed;
+            if (SmoothCurrentResource < currentResource)
+                SmoothCurrentResource = Math.Min(SmoothCurrentResource + smoothStep, currentResource);
+            else if (SmoothCurrentResource > currentResource)
+                SmoothCurrentResource = currentResource;
+
+            if (ResourceBeforeSpent > maxResource) ResourceBeforeSpent = currentResource;
+            if (ResourceTemp > SmoothCurrentResource) ResourceTemp = SmoothCurrentResource;
+            if (ResourceBeforeSpent < SmoothCurrentResource) ResourceBeforeSpent = SmoothCurrentResource;
+
+            if (_resourceAnimationTimer > 0)
+            {
+                _resourceAnimationTimer -= KingdomHeartsPlugin.UiSpeed;
+            }
+            else
+            {
+                float linearStep = maxResource * (KingdomHeartsPlugin.Ui.Configuration.ResourceAnimationSpeed * 0.015f) * KingdomHeartsPlugin.UiSpeed;
+                linearStep = Math.Max(linearStep, 1f);
+
+                if (ResourceBeforeSpent > currentResource)
+                {
+                    ResourceBeforeSpent -= linearStep;
+                    if (ResourceBeforeSpent < currentResource) ResourceBeforeSpent = currentResource;
+                }
+                if (ResourceTemp < currentResource)
+                {
+                    ResourceTemp += linearStep;
+                    if (ResourceTemp > currentResource) ResourceTemp = currentResource;
+                }
+            }
+
+            if (ResourceBeforeSpent > currentResource)
+            {
+                SpentResourceAlpha = 1f;
+            }
+            else if (SpentResourceAlpha > 0)
+            {
+                SpentResourceAlpha -= 1.5f * KingdomHeartsPlugin.UiSpeed;
+                if (SpentResourceAlpha < 0) SpentResourceAlpha = 0;
+            }
         }
 
         public void Draw(IPlayerCharacter player)
@@ -119,11 +188,28 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
             // BG
             ImageDrawing.DrawImageScaled(drawList, _barBackgroundTexture, new Vector2(basePosition.X + 0.33f - MaxResourceLength, basePosition.Y), new Vector2(MaxResourceLength, 1f));
 
-            // FG
-            ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - ResourceLength, basePosition.Y + 5), new Vector2(ResourceLength, 1f));
+            // Spent Resource Trail (Red Tint)
+            if (SpentResourceLength > 0 && SpentResourceAlpha > 0)
+            {
+                ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - SpentResourceLength, basePosition.Y + 5), new Vector2(SpentResourceLength, 1f), ImGui.GetColorU32(new Vector4(1f, 0f, 0f, SpentResourceAlpha)));
+            }
+
+            // Recovery Trail (Cyan Tint)
+            if (KingdomHeartsPlugin.Ui.Configuration.ShowResourceRecovery && ResourceTemp < SmoothCurrentResource)
+            {
+                ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - ResourceLength, basePosition.Y + 5), new Vector2(ResourceLength, 1f), ImGui.GetColorU32(new Vector4(0.4f, 0.8f, 1f, 0.8f))); 
+            }
+
+            // FG (Active Resource Length)
+            float fgLength = KingdomHeartsPlugin.Ui.Configuration.ShowResourceRecovery ? TempResourceLength : ResourceLength;
+            if (fgLength > 0)
+            {
+                ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - fgLength, basePosition.Y + 5), new Vector2(fgLength, 1f));
+            }
 
             // Edge
             ImageDrawing.DrawImage(drawList, _barEdgeTexture, new Vector2(basePosition.X + 0.65f - MaxResourceLength - 6, basePosition.Y));
+            
             // Base Edge
             ImageDrawing.DrawImageRotated(drawList, _barEdgeTexture, new Vector2(basePosition.X + 74, basePosition.Y + 16), new Vector2(_barEdgeTexture.GetWrapOrEmpty().Width, _barEdgeTexture.GetWrapOrEmpty().Height), (float)Math.PI);
 
@@ -140,5 +226,15 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
         private uint ResourceMax { get; set; }
         private float ResourceLength { get; set; }
         private float MaxResourceLength { get; set; }
+
+        // Animation Properties
+        private uint LastResource { get; set; }
+        private float SmoothCurrentResource { get; set; }
+        private float ResourceBeforeSpent { get; set; }
+        private float ResourceTemp { get; set; }
+        private float SpentResourceLength { get; set; }
+        private float TempResourceLength { get; set; }
+        private float _resourceAnimationTimer { get; set; }
+        public float SpentResourceAlpha { get; private set; }
     }
 }
