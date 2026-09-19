@@ -64,8 +64,9 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             if (KingdomHeartsPlugin.Ui.Configuration.HpBarEnabled)
             {
                 byte role = player.ClassJob.ValueNullable?.Role ?? 0;
+                uint jobId = player.ClassJob.ValueNullable?.RowId ?? 0;
                 UpdateHealth(player);
-                DrawHealth(drawList, player.CurrentHp, player.MaxHp, player.Level, role);
+                DrawHealth(drawList, player.CurrentHp, player.MaxHp, player.Level, jobId, role);
             }
 
             if (KingdomHeartsPlugin.Ui.Configuration.ResourceBarEnabled) _resourceBar?.Draw(player);
@@ -298,22 +299,61 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
         }
 
-        private float GetRoleMultiplier(byte role)
+        private float GetHpMultiplier(uint jobId, byte role)
         {
             var config = KingdomHeartsPlugin.Ui.Configuration;
             if (!config.EnableRoleHpMultipliers) return 1.0f;
 
             return role switch
             {
-                1 => config.TankHpMultiplier,   // Tank
-                2 => config.MeleeHpMultiplier,  // Melee DPS
-                3 => config.RangedHpMultiplier, // Ranged DPS (Physical / Magic)
-                4 => config.HealerHpMultiplier, // Healer
-                _ => config.OtherHpMultiplier   // Hand/Land / Other
+                1 => config.EnableTankJobHpMultipliers ? jobId switch
+                {
+                    19 => config.PldHpMultiplier,
+                    21 => config.WarHpMultiplier,
+                    32 => config.DrkHpMultiplier,
+                    37 => config.GnbHpMultiplier,
+                    _ => config.TankHpMultiplier
+                } : config.TankHpMultiplier,
+
+                2 => config.EnableMeleeJobHpMultipliers ? jobId switch
+                {
+                    20 => config.MnkHpMultiplier,
+                    22 => config.DrgHpMultiplier,
+                    30 => config.NinHpMultiplier,
+                    34 => config.SamHpMultiplier,
+                    39 => config.RprHpMultiplier,
+                    41 => config.VprHpMultiplier,
+                    43 => config.BstHpMultiplier,
+                    _ => config.MeleeHpMultiplier
+                } : config.MeleeHpMultiplier,
+
+                3 => config.EnableRangedJobHpMultipliers ? jobId switch
+                {
+                    23 => config.BrdHpMultiplier,
+                    31 => config.MchHpMultiplier,
+                    38 => config.DncHpMultiplier,
+                    25 => config.BlmHpMultiplier,
+                    27 => config.SmnHpMultiplier,
+                    35 => config.RdmHpMultiplier,
+                    42 => config.PctHpMultiplier,
+                    36 => config.BluHpMultiplier,
+                    _ => config.RangedHpMultiplier
+                } : config.RangedHpMultiplier,
+
+                4 => config.EnableHealerJobHpMultipliers ? jobId switch
+                {
+                    24 => config.WhmHpMultiplier,
+                    28 => config.SchHpMultiplier,
+                    33 => config.AstHpMultiplier,
+                    40 => config.SgeHpMultiplier,
+                    _ => config.HealerHpMultiplier
+                } : config.HealerHpMultiplier,
+
+                _ => config.OtherHpMultiplier
             };
         }
 
-        private void DrawHealth(ImDrawListPtr drawList, uint hp, uint maxHp, byte level, byte role)
+        private void DrawHealth(ImDrawListPtr drawList, uint hp, uint maxHp, byte level, uint jobId, byte role)
         {
             var fullRing = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpForFullRing : KingdomHeartsPlugin.Ui.Configuration.HpForFullRing;
             var minimumMaxHpSize = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpMinimumHpForLength : KingdomHeartsPlugin.Ui.Configuration.MinimumHpForLength;
@@ -323,7 +363,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             var hpPerLevel = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpPerLevel : KingdomHeartsPlugin.Ui.Configuration.HpPerLevel;
             var ignoreRingForLevelScaling = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpIgnoreRingForLevelScaling : KingdomHeartsPlugin.Ui.Configuration.IgnoreRingForLevelScaling;
 
-            float roleMultiplier = GetRoleMultiplier(role);
+            float roleMultiplier = GetHpMultiplier(jobId, role);
 
             if (isLevelBased)
             {
