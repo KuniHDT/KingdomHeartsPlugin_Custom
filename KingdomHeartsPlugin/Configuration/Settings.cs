@@ -69,6 +69,9 @@ namespace KingdomHeartsPlugin.Configuration
         public int MpPerLevel { get; set; } = Defaults.MpPerLevel;
         public int GpPerLevel { get; set; } = Defaults.GpPerLevel;
         public int CpPerLevel { get; set; } = Defaults.CpPerLevel;
+        public bool ShowResourceRecovery { get; set; } = Defaults.ShowResourceRecovery;
+        public float ResourceAnimationSpeed { get; set; } = Defaults.ResourceAnimationSpeed;
+        public float ResourceAnimationDelay { get; set; } = Defaults.ResourceAnimationDelay;
         #endregion
 
         #region Limit Break

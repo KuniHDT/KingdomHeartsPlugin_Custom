@@ -63,6 +63,9 @@ namespace KingdomHeartsPlugin.Configuration
         public const int MpPerLevel = 50;
         public const int GpPerLevel = 5;
         public const int CpPerLevel = 5;
+        public const bool ShowResourceRecovery = true;
+        public const float ResourceAnimationSpeed = 50f;
+        public const float ResourceAnimationDelay = 1.0f;
         #endregion
 
         #region Limit Break

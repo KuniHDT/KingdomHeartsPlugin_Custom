@@ -160,10 +160,13 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         private void DamagedHealth(uint damageAmount, uint maxHp)
         {
             float damagePercent = Math.Clamp((float)damageAmount / maxHp, 0.01f, 1f);
-            
+
             // Wobble physics injection
             float impactForce = -4f - (damagePercent * 25f);
             HealthVerticalSpeed += impactForce;
+
+            // Trigger the red flash effect
+            _flashAlpha = 1.0f;
         }
 
         private void UpdateDamagedHealth()
@@ -257,6 +260,13 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 DamagedHealthAlpha -= 1.5f * KingdomHeartsPlugin.UiSpeed;
                 if (DamagedHealthAlpha < 0) DamagedHealthAlpha = 0;
             }
+
+            // Fade out the flash effect
+            if (_flashAlpha > 0)
+            {
+                _flashAlpha -= 3.0f * KingdomHeartsPlugin.UiSpeed;
+                if (_flashAlpha < 0) _flashAlpha = 0;
+            }
         }
 
         private void UpdateLowHealth(uint health, uint maxHealth)
@@ -341,8 +351,15 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 HealthRing?.Draw(drawList, SmoothCurrentHp / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             }
 
-            RingOutline?.Draw(drawList, maxHealthPercent, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+            // Add Flash effect for the ring
+            if (_flashAlpha > 0 && HealthLostRing is not null)
+            {
+                float currentHpLength = (KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp) / (float)fullRing * HpLengthMultiplier;
+                HealthLostRing.Alpha = _flashAlpha;
+                HealthLostRing.Draw(drawList, currentHpLength, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+            }
 
+            RingOutline?.Draw(drawList, maxHealthPercent, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             DrawLongHealthBar(drawList, hp, maxHp);
         }
 
@@ -376,7 +393,14 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
             if (healthLength > 0)
             {
+                // Normal green/foreground bar
                 ImageDrawing.DrawImageScaled(drawList, BarForegroundTexture, new Vector2(basePosition.X - healthLength, basePosition.Y + 4), new Vector2(healthLength, 1));
+
+                // Flash overlay for the long bar
+                if (_flashAlpha > 0)
+                {
+                    ImageDrawing.DrawImageScaled(drawList, BarColorlessTexture, new Vector2(basePosition.X - healthLength, basePosition.Y + 4), new Vector2(healthLength, 1), ImGui.GetColorU32(new Vector4(1f, 0f, 0f, _flashAlpha)));
+                }
             }
 
             if (maxHealthLength > 0)
@@ -423,6 +447,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         public float DamagedHealthAlpha { get; private set; }
         public float LowHealthAlpha { get; private set; }
         private int LowHealthAlphaDirection { get; set; }
+        private float _flashAlpha { get; set; }
 
         // Timers
         private float _hpAnimationTimer { get; set; }
