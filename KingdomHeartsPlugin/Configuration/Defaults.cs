@@ -1,4 +1,5 @@
-﻿using KingdomHeartsPlugin.Enums;
+using KingdomHeartsPlugin.Enums;
+using System.Numerics;
 
 namespace KingdomHeartsPlugin.Configuration
 {
@@ -32,11 +33,19 @@ namespace KingdomHeartsPlugin.Configuration
         public const bool ShowHpRecovery  = true;
         public const bool ShowHpVal  = true;
         public const bool LengthByLevel = false;
+        public const bool IgnoreRingForLevelScaling = false;
         public const int HpPerLevel = 500;
         public const bool PvpLengthByLevel = false;
+        public const bool PvpIgnoreRingForLevelScaling = false;
         public const int PvpHpPerLevel = 250;
         public const float HpAnimationSpeed = 50f;
         public const float HpAnimationDelay = 1.0f;
+        public const bool EnableRoleHpMultipliers = false;
+        public const float TankHpMultiplier = 1.0f;
+        public const float MeleeHpMultiplier = 1.0f;
+        public const float RangedHpMultiplier = 1.0f;
+        public const float HealerHpMultiplier = 1.0f;
+        public const float OtherHpMultiplier = 1.0f;
         #endregion
 
         #region Resource
@@ -66,6 +75,15 @@ namespace KingdomHeartsPlugin.Configuration
         public const bool ShowResourceRecovery = true;
         public const float ResourceAnimationSpeed = 50f;
         public const float ResourceAnimationDelay = 1.0f;
+        
+        public const bool EnableRoleResourceMultipliers = false;
+        public const float TankResourceMultiplier = 1.0f;
+        public const float MeleeResourceMultiplier = 1.0f;
+        public const float RangedResourceMultiplier = 1.0f;
+        public const float HealerResourceMultiplier = 1.0f;
+        public const float OtherResourceMultiplier = 1.0f;
+        public static readonly Vector4 ResourceSpentColor = new(1f, 0f, 0f, 1f);
+        public static readonly Vector4 ResourceRecoveredColor = new(0.4f, 0.8f, 1f, 0.8f);
         #endregion
 
         #region Limit Break

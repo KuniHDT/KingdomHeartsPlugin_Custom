@@ -167,6 +167,11 @@ namespace KingdomHeartsPlugin
                 ImGui.Indent();
                 var hpPerLevel = Configuration.HpPerLevel;
                 if (ImGui.InputInt("Simulated HP added per Level", ref hpPerLevel, 10, 100)) Configuration.HpPerLevel = Math.Max(1, hpPerLevel);
+                
+                var ignoreRing = Configuration.IgnoreRingForLevelScaling;
+                if (ImGui.Checkbox("Ignore Full Ring for Level Scaling", ref ignoreRing)) Configuration.IgnoreRingForLevelScaling = ignoreRing;
+                HoverTooltip("Simulated HP will scale the long bar without affecting the ring's base required capacity.");
+                
                 ImGui.Unindent();
             }
             ImGui.Unindent();
@@ -187,7 +192,52 @@ namespace KingdomHeartsPlugin
             var maxLengthPvp = Configuration.PvpMaximumHpForMaximumLength;
             if (ImGui.InputInt("PvP Max HP for max length", ref maxLengthPvp, 5, 50)) Configuration.PvpMaximumHpForMaximumLength = Math.Max(1, maxLengthPvp);
 
+            var pvpLengthByLevel = Configuration.PvpLengthByLevel;
+            if (ImGui.Checkbox("Scale PvP Max Length by Level", ref pvpLengthByLevel)) Configuration.PvpLengthByLevel = pvpLengthByLevel;
+            HoverTooltip("Overrides manual PvP Max HP limits with a simulated pool based on Level.");
+
+            if (Configuration.PvpLengthByLevel)
+            {
+                ImGui.Indent();
+                var pvpHpPerLevel = Configuration.PvpHpPerLevel;
+                if (ImGui.InputInt("Simulated PvP HP added per Level", ref pvpHpPerLevel, 10, 100)) Configuration.PvpHpPerLevel = Math.Max(1, pvpHpPerLevel);
+
+                var pvpIgnoreRing = Configuration.PvpIgnoreRingForLevelScaling;
+                if (ImGui.Checkbox("Ignore Full Ring for PvP Level Scaling", ref pvpIgnoreRing)) Configuration.PvpIgnoreRingForLevelScaling = pvpIgnoreRing;
+                HoverTooltip("Simulated HP will scale the long bar without affecting the ring's base required capacity.");
+
+                ImGui.Unindent();
+            }
+
             ImGui.Unindent();
+
+            ImGui.Spacing();
+            SectionHeader("Job Role Multipliers");
+            var enableRoleMultipliers = Configuration.EnableRoleHpMultipliers;
+            if (ImGui.Checkbox("Enable Job Role Multipliers", ref enableRoleMultipliers)) Configuration.EnableRoleHpMultipliers = enableRoleMultipliers;
+            HoverTooltip("Scales total health bar length based on the active job's role (applies to standard and level scaling).");
+
+            if (Configuration.EnableRoleHpMultipliers)
+            {
+                ImGui.Indent();
+
+                var tankMult = Configuration.TankHpMultiplier;
+                if (ImGui.InputFloat("Tank Multiplier", ref tankMult, 0.05f, 0.1f, "%.2f")) Configuration.TankHpMultiplier = Math.Max(0.01f, tankMult);
+
+                var meleeMult = Configuration.MeleeHpMultiplier;
+                if (ImGui.InputFloat("Melee DPS Multiplier", ref meleeMult, 0.05f, 0.1f, "%.2f")) Configuration.MeleeHpMultiplier = Math.Max(0.01f, meleeMult);
+
+                var rangedMult = Configuration.RangedHpMultiplier;
+                if (ImGui.InputFloat("Ranged DPS Multiplier", ref rangedMult, 0.05f, 0.1f, "%.2f")) Configuration.RangedHpMultiplier = Math.Max(0.01f, rangedMult);
+
+                var healerMult = Configuration.HealerHpMultiplier;
+                if (ImGui.InputFloat("Healer Multiplier", ref healerMult, 0.05f, 0.1f, "%.2f")) Configuration.HealerHpMultiplier = Math.Max(0.01f, healerMult);
+
+                var otherMult = Configuration.OtherHpMultiplier;
+                if (ImGui.InputFloat("Other / Crafter / Gatherer Multiplier", ref otherMult, 0.05f, 0.1f, "%.2f")) Configuration.OtherHpMultiplier = Math.Max(0.01f, otherMult);
+
+                ImGui.Unindent();
+            }
 
             ImGui.Spacing();
             SectionHeader("Value Text");
@@ -344,6 +394,51 @@ namespace KingdomHeartsPlugin
                 var maximumCpLength = Configuration.MaximumCpLength;
                 if (ImGui.InputInt("Max CP for scaling", ref maximumCpLength, 1, 25)) Configuration.MaximumCpLength = Math.Max(1, maximumCpLength);
             }
+
+            ImGui.Spacing();
+            SectionHeader("Job Role Multipliers");
+            var enableRoleMultipliers = Configuration.EnableRoleResourceMultipliers;
+            if (ImGui.Checkbox("Enable Job Role Multipliers##Resource", ref enableRoleMultipliers)) Configuration.EnableRoleResourceMultipliers = enableRoleMultipliers;
+            HoverTooltip("Scales total resource bar length based on the active job's role.");
+
+            if (Configuration.EnableRoleResourceMultipliers)
+            {
+                ImGui.Indent();
+
+                var tankMult = Configuration.TankResourceMultiplier;
+                if (ImGui.InputFloat("Tank Multiplier##Resource", ref tankMult, 0.05f, 0.1f, "%.2f")) Configuration.TankResourceMultiplier = Math.Max(0.01f, tankMult);
+
+                var meleeMult = Configuration.MeleeResourceMultiplier;
+                if (ImGui.InputFloat("Melee DPS Multiplier##Resource", ref meleeMult, 0.05f, 0.1f, "%.2f")) Configuration.MeleeResourceMultiplier = Math.Max(0.01f, meleeMult);
+
+                var rangedMult = Configuration.RangedResourceMultiplier;
+                if (ImGui.InputFloat("Ranged DPS Multiplier##Resource", ref rangedMult, 0.05f, 0.1f, "%.2f")) Configuration.RangedResourceMultiplier = Math.Max(0.01f, rangedMult);
+
+                var healerMult = Configuration.HealerResourceMultiplier;
+                if (ImGui.InputFloat("Healer Multiplier##Resource", ref healerMult, 0.05f, 0.1f, "%.2f")) Configuration.HealerResourceMultiplier = Math.Max(0.01f, healerMult);
+
+                var otherMult = Configuration.OtherResourceMultiplier;
+                if (ImGui.InputFloat("Other / Crafter / Gatherer Multiplier##Resource", ref otherMult, 0.05f, 0.1f, "%.2f")) Configuration.OtherResourceMultiplier = Math.Max(0.01f, otherMult);
+
+                ImGui.Unindent();
+            }
+
+            ImGui.Spacing();
+            SectionHeader("Effects & Colors");
+            var showResourceRecovery = Configuration.ShowResourceRecovery;
+            if (ImGui.Checkbox("Show Resource Recovery Animation", ref showResourceRecovery)) Configuration.ShowResourceRecovery = showResourceRecovery;
+            
+            var resourceAnimSpeed = Configuration.ResourceAnimationSpeed;
+            if (ImGui.SliderFloat("Animation Speed (%/s)##Resource", ref resourceAnimSpeed, 10f, 200f)) Configuration.ResourceAnimationSpeed = resourceAnimSpeed;
+            
+            var resourceAnimDelay = Configuration.ResourceAnimationDelay;
+            if (ImGui.SliderFloat("Animation Delay (s)##Resource", ref resourceAnimDelay, 0f, 3f)) Configuration.ResourceAnimationDelay = resourceAnimDelay;
+
+            var spentColor = Configuration.ResourceSpentColor;
+            if (ImGui.ColorEdit4("Spent Resource Color", ref spentColor)) Configuration.ResourceSpentColor = spentColor;
+
+            var recoveredColor = Configuration.ResourceRecoveredColor;
+            if (ImGui.ColorEdit4("Recovered Resource Color", ref recoveredColor)) Configuration.ResourceRecoveredColor = recoveredColor;
 
             ImGui.EndTabItem();
         }

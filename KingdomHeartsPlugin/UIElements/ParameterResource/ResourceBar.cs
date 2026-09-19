@@ -102,6 +102,20 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
             UpdateResourceAnimations(ResourceValue, ResourceMax);
             LastResource = ResourceValue;
 
+            float roleMultiplier = 1f;
+            if (KingdomHeartsPlugin.Ui.Configuration.EnableRoleResourceMultipliers)
+            {
+                var role = player.ClassJob.Value.Role;
+                roleMultiplier = role switch
+                {
+                    1 => KingdomHeartsPlugin.Ui.Configuration.TankResourceMultiplier,
+                    2 => KingdomHeartsPlugin.Ui.Configuration.MeleeResourceMultiplier,
+                    3 => KingdomHeartsPlugin.Ui.Configuration.RangedResourceMultiplier,
+                    4 => KingdomHeartsPlugin.Ui.Configuration.HealerResourceMultiplier,
+                    _ => KingdomHeartsPlugin.Ui.Configuration.OtherResourceMultiplier
+                };
+            }
+
             float lengthMultiplier;
             if (KingdomHeartsPlugin.Ui.Configuration.ResourceLengthByLevel)
             {
@@ -124,6 +138,8 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
                         ? (float)maxLength / ResourceMax
                         : 1f;
             }
+            
+            lengthMultiplier *= roleMultiplier;
 
             MaxResourceLength = (float)Math.Ceiling(ResourceMax / lengthRate * lengthMultiplier);
             ResourceLength = (float)Math.Ceiling(SmoothCurrentResource / lengthRate * lengthMultiplier);
@@ -133,9 +149,8 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
 
         private void UpdateResourceAnimations(uint currentResource, uint maxResource)
         {
-            float smoothStep = maxResource * 0.35f * KingdomHeartsPlugin.UiSpeed;
             if (SmoothCurrentResource < currentResource)
-                SmoothCurrentResource = Math.Min(SmoothCurrentResource + smoothStep, currentResource);
+                SmoothCurrentResource = currentResource; // Instantly snaps on restored
             else if (SmoothCurrentResource > currentResource)
                 SmoothCurrentResource = currentResource;
 
@@ -157,7 +172,7 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
                     ResourceBeforeSpent -= linearStep;
                     if (ResourceBeforeSpent < currentResource) ResourceBeforeSpent = currentResource;
                 }
-                if (ResourceTemp < currentResource)
+                if (ResourceTemp < currentResource) // Slowly catch up
                 {
                     ResourceTemp += linearStep;
                     if (ResourceTemp > currentResource) ResourceTemp = currentResource;
@@ -191,13 +206,14 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
             // Spent Resource Trail (Red Tint)
             if (SpentResourceLength > 0 && SpentResourceAlpha > 0)
             {
-                ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - SpentResourceLength, basePosition.Y + 5), new Vector2(SpentResourceLength, 1f), ImGui.GetColorU32(new Vector4(1f, 0f, 0f, SpentResourceAlpha)));
+                var spentColor = KingdomHeartsPlugin.Ui.Configuration.ResourceSpentColor;
+                ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - SpentResourceLength, basePosition.Y + 5), new Vector2(SpentResourceLength, 1f), ImGui.GetColorU32(new Vector4(spentColor.X, spentColor.Y, spentColor.Z, spentColor.W * SpentResourceAlpha)));
             }
 
             // Recovery Trail (Cyan Tint)
             if (KingdomHeartsPlugin.Ui.Configuration.ShowResourceRecovery && ResourceTemp < SmoothCurrentResource)
             {
-                ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - ResourceLength, basePosition.Y + 5), new Vector2(ResourceLength, 1f), ImGui.GetColorU32(new Vector4(0.4f, 0.8f, 1f, 0.8f))); 
+                ImageDrawing.DrawImageScaled(drawList, _barForegroundTexture, new Vector2(basePosition.X + 0.33f - ResourceLength, basePosition.Y + 5), new Vector2(ResourceLength, 1f), ImGui.GetColorU32(KingdomHeartsPlugin.Ui.Configuration.ResourceRecoveredColor)); 
             }
 
             // FG (Active Resource Length)

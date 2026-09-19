@@ -63,8 +63,9 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
             if (KingdomHeartsPlugin.Ui.Configuration.HpBarEnabled)
             {
+                byte role = player.ClassJob.ValueNullable?.Role ?? 0;
                 UpdateHealth(player);
-                DrawHealth(drawList, player.CurrentHp, player.MaxHp, player.Level);
+                DrawHealth(drawList, player.CurrentHp, player.MaxHp, player.Level, role);
             }
 
             if (KingdomHeartsPlugin.Ui.Configuration.ResourceBarEnabled) _resourceBar?.Draw(player);
@@ -297,7 +298,22 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
         }
 
-        private void DrawHealth(ImDrawListPtr drawList, uint hp, uint maxHp, byte level)
+        private float GetRoleMultiplier(byte role)
+        {
+            var config = KingdomHeartsPlugin.Ui.Configuration;
+            if (!config.EnableRoleHpMultipliers) return 1.0f;
+
+            return role switch
+            {
+                1 => config.TankHpMultiplier,   // Tank
+                2 => config.MeleeHpMultiplier,  // Melee DPS
+                3 => config.RangedHpMultiplier, // Ranged DPS (Physical / Magic)
+                4 => config.HealerHpMultiplier, // Healer
+                _ => config.OtherHpMultiplier   // Hand/Land / Other
+            };
+        }
+
+        private void DrawHealth(ImDrawListPtr drawList, uint hp, uint maxHp, byte level, byte role)
         {
             var fullRing = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpForFullRing : KingdomHeartsPlugin.Ui.Configuration.HpForFullRing;
             var minimumMaxHpSize = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpMinimumHpForLength : KingdomHeartsPlugin.Ui.Configuration.MinimumHpForLength;
@@ -305,23 +321,32 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
             var isLevelBased = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpLengthByLevel : KingdomHeartsPlugin.Ui.Configuration.LengthByLevel;
             var hpPerLevel = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpPerLevel : KingdomHeartsPlugin.Ui.Configuration.HpPerLevel;
+            var ignoreRingForLevelScaling = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpIgnoreRingForLevelScaling : KingdomHeartsPlugin.Ui.Configuration.IgnoreRingForLevelScaling;
+
+            float roleMultiplier = GetRoleMultiplier(role);
 
             if (isLevelBased)
             {
-                float simulatedHp = minimumMaxHpSize + (level * hpPerLevel);
+                float simulatedHp = (minimumMaxHpSize + (level * hpPerLevel)) * roleMultiplier;
                 HpLengthMultiplier = simulatedHp / (float)maxHp;
             }
             else
             {
-                HpLengthMultiplier = maxHp < minimumMaxHpSize
+                float baseMultiplier = maxHp < minimumMaxHpSize
                     ? minimumMaxHpSize / (float)maxHp
                     : maxHp > maximumMaxHpSize
                         ? (float)maximumMaxHpSize / maxHp
                         : 1f;
+
+                HpLengthMultiplier = baseMultiplier * roleMultiplier;
             }
 
+            bool scaleBeforeRing = !isLevelBased || ignoreRingForLevelScaling;
+            float GetScaledHp(float hpValue) => scaleBeforeRing ? hpValue * HpLengthMultiplier : hpValue;
+
             var drawPosition = ImGui.GetItemRectMin();
-            var maxHealthPercent = maxHp / (float)fullRing * HpLengthMultiplier;
+            
+            var maxHealthPercent = GetScaledHp(maxHp) / (float)fullRing; 
 
             try
             {
@@ -339,44 +364,59 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 if (HealthLostRing is not null)
                 {
                     HealthLostRing.Alpha = DamagedHealthAlpha;
-                    HealthLostRing.Draw(drawList, HpBeforeDamaged / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                    HealthLostRing.Draw(drawList, GetScaledHp(HpBeforeDamaged) / (float)fullRing, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
                 }
             }
 
             if (KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery)
             {
                 if (HpTemp < SmoothCurrentHp)
-                    HealthRestoredRing?.Draw(drawList, SmoothCurrentHp / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                    HealthRestoredRing?.Draw(drawList, GetScaledHp(SmoothCurrentHp) / (float)fullRing, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
 
-                HealthRing?.Draw(drawList, HpTemp / fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                HealthRing?.Draw(drawList, GetScaledHp(HpTemp) / (float)fullRing, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             }
             else
             {
-                HealthRing?.Draw(drawList, SmoothCurrentHp / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                HealthRing?.Draw(drawList, GetScaledHp(SmoothCurrentHp) / (float)fullRing, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             }
 
             // Add Flash effect for the ring
             if (_flashAlpha > 0 && HealthLostRing is not null)
             {
-                float currentHpLength = (KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp) / (float)fullRing * HpLengthMultiplier;
+                float currentHpLength = GetScaledHp(KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp) / (float)fullRing;
                 HealthLostRing.Alpha = _flashAlpha;
                 HealthLostRing.Draw(drawList, currentHpLength, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             }
 
             RingOutline?.Draw(drawList, maxHealthPercent, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
-            DrawLongHealthBar(drawList, hp, maxHp);
+            DrawLongHealthBar(drawList, hp, maxHp, scaleBeforeRing);
         }
 
-        private void DrawLongHealthBar(ImDrawListPtr drawList, uint hp, uint maxHp)
+        private void DrawLongHealthBar(ImDrawListPtr drawList, uint hp, uint maxHp, bool scaleBeforeRing)
         {
             var fullRing = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpForFullRing : KingdomHeartsPlugin.Ui.Configuration.HpForFullRing;
             var HpPerWidth = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpPerPixelLongBar : KingdomHeartsPlugin.Ui.Configuration.HpPerPixelLongBar;
             var basePosition = new Vector2(129, 212 + HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f);
             
-            var healthLength = ((KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp) * HpLengthMultiplier - fullRing) / HpPerWidth;
-            var damagedHealthLength = (HpBeforeDamaged * HpLengthMultiplier - fullRing) / HpPerWidth;
-            var restoredHealthLength = ((KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery && HpTemp < SmoothCurrentHp ? SmoothCurrentHp : 0) * HpLengthMultiplier - fullRing) / HpPerWidth;
-            var maxHealthLength = (maxHp * HpLengthMultiplier - fullRing) / HpPerWidth;
+            float GetScaledHp(float hpValue) => scaleBeforeRing ? hpValue * HpLengthMultiplier : hpValue;
+
+            float actualCurrentHp = KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp;
+            var healthLength = scaleBeforeRing
+                ? Math.Max(0, GetScaledHp(actualCurrentHp) - fullRing) / HpPerWidth
+                : Math.Max(0, actualCurrentHp - fullRing) * HpLengthMultiplier / HpPerWidth;
+            
+            var damagedHealthLength = scaleBeforeRing
+                ? Math.Max(0, GetScaledHp(HpBeforeDamaged) - fullRing) / HpPerWidth
+                : Math.Max(0, HpBeforeDamaged - fullRing) * HpLengthMultiplier / HpPerWidth;
+            
+            float actualRestoredHp = KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery && HpTemp < SmoothCurrentHp ? SmoothCurrentHp : 0;
+            var restoredHealthLength = scaleBeforeRing
+                ? Math.Max(0, GetScaledHp(actualRestoredHp) - fullRing) / HpPerWidth
+                : Math.Max(0, actualRestoredHp - fullRing) * HpLengthMultiplier / HpPerWidth;
+            
+            var maxHealthLength = scaleBeforeRing
+                ? Math.Max(0, GetScaledHp(maxHp) - fullRing) / HpPerWidth
+                : Math.Max(0, maxHp - fullRing) * HpLengthMultiplier / HpPerWidth;
             
             if (maxHealthLength > 0)
             {

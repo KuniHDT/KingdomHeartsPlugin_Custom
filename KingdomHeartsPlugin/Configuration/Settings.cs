@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Numerics;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using KingdomHeartsPlugin.Enums;
@@ -38,11 +39,19 @@ namespace KingdomHeartsPlugin.Configuration
         public bool ShowHpRecovery { get; set; } = Defaults.ShowHpRecovery;
         public bool ShowHpVal { get; set; } = Defaults.ShowHpVal;
         public bool LengthByLevel { get; set; } = Defaults.LengthByLevel;
+        public bool IgnoreRingForLevelScaling { get; set; } = Defaults.IgnoreRingForLevelScaling;
         public int HpPerLevel { get; set; } = Defaults.HpPerLevel;
         public bool PvpLengthByLevel { get; set; } = Defaults.PvpLengthByLevel;
+        public bool PvpIgnoreRingForLevelScaling { get; set; } = Defaults.PvpIgnoreRingForLevelScaling;
         public int PvpHpPerLevel { get; set; } = Defaults.PvpHpPerLevel;
         public float HpAnimationSpeed { get; set; } = Defaults.HpAnimationSpeed;
         public float HpAnimationDelay { get; set; } = Defaults.HpAnimationDelay;
+        public bool EnableRoleHpMultipliers { get; set; } = Defaults.EnableRoleHpMultipliers;
+        public float TankHpMultiplier { get; set; } = Defaults.TankHpMultiplier;
+        public float MeleeHpMultiplier { get; set; } = Defaults.MeleeHpMultiplier;
+        public float RangedHpMultiplier { get; set; } = Defaults.RangedHpMultiplier;
+        public float HealerHpMultiplier { get; set; } = Defaults.HealerHpMultiplier;
+        public float OtherHpMultiplier { get; set; } = Defaults.OtherHpMultiplier;
         #endregion
 
         #region Resource
@@ -72,6 +81,14 @@ namespace KingdomHeartsPlugin.Configuration
         public bool ShowResourceRecovery { get; set; } = Defaults.ShowResourceRecovery;
         public float ResourceAnimationSpeed { get; set; } = Defaults.ResourceAnimationSpeed;
         public float ResourceAnimationDelay { get; set; } = Defaults.ResourceAnimationDelay;
+        public bool EnableRoleResourceMultipliers { get; set; } = Defaults.EnableRoleResourceMultipliers;
+        public float TankResourceMultiplier { get; set; } = Defaults.TankResourceMultiplier;
+        public float MeleeResourceMultiplier { get; set; } = Defaults.MeleeResourceMultiplier;
+        public float RangedResourceMultiplier { get; set; } = Defaults.RangedResourceMultiplier;
+        public float HealerResourceMultiplier { get; set; } = Defaults.HealerResourceMultiplier;
+        public float OtherResourceMultiplier { get; set; } = Defaults.OtherResourceMultiplier;
+        public Vector4 ResourceSpentColor { get; set; } = Defaults.ResourceSpentColor;
+        public Vector4 ResourceRecoveredColor { get; set; } = Defaults.ResourceRecoveredColor;
         #endregion
 
         #region Limit Break
@@ -102,8 +119,6 @@ namespace KingdomHeartsPlugin.Configuration
         public bool ClassIconEnabled { get; set; } = Defaults.ClassIconEnabled;
 
         #endregion
-
-        // the below exist just to make saving less cumbersome
 
         [NonSerialized]
         private IDalamudPluginInterface _pluginInterface = null!;
