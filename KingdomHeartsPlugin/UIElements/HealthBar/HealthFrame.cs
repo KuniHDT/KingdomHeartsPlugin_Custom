@@ -132,19 +132,30 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
             if (player.CurrentHp != LastHp)
             {
-                // Reset shared delay timer when a change happens
-                _hpAnimationTimer = KingdomHeartsPlugin.Ui.Configuration.HpAnimationDelay;
-
                 if (player.CurrentHp < LastHp)
                 {
                     uint damageAmount = LastHp - player.CurrentHp;
                     DamagedHealth(damageAmount, player.MaxHp);
+
+                    // Only apply delay if the damaged bar is not currently actively animating
+                    bool isDamageAnimating = HpBeforeDamaged > LastHp && _damageAnimationTimer <= 0;
+                    if (!isDamageAnimating)
+                    {
+                        _damageAnimationTimer = KingdomHeartsPlugin.Ui.Configuration.HpAnimationDelay;
+                    }
 
                     // Ensure damaged visual continues from the highest recent point
                     HpBeforeDamaged = Math.Max(HpBeforeDamaged, LastHp);
                 }
                 else if (player.CurrentHp > LastHp)
                 {
+                    // Only apply delay if the restored bar is not currently actively animating
+                    bool isHealAnimating = HpTemp < LastHp && _healAnimationTimer <= 0;
+                    if (!isHealAnimating)
+                    {
+                        _healAnimationTimer = KingdomHeartsPlugin.Ui.Configuration.HpAnimationDelay;
+                    }
+
                     // Ensure restore visual starts/continues from the lowest recent point (No Skipping)
                     HpTemp = Math.Min(HpTemp, LastHp);
                 }
@@ -197,16 +208,8 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
         private void UpdateHpAnimations(uint currentHp, uint maxHp)
         {
-            // Linearly interpolate current health when healing, but snap instantly when damaged
-            float smoothStep = maxHp * 0.35f * KingdomHeartsPlugin.UiSpeed; // Adjust 0.35f if you want the main bar to fill faster/slower
-            if (SmoothCurrentHp < currentHp)
-            {
-                SmoothCurrentHp = Math.Min(SmoothCurrentHp + smoothStep, currentHp);
-            }
-            else if (SmoothCurrentHp > currentHp)
-            {
-                SmoothCurrentHp = currentHp;
-            }
+            // The restored health instantly snaps to the new value instead of interpolating
+            SmoothCurrentHp = currentHp;
 
             // Prevent visuals from overlapping incorrectly by keeping Temp values clamped to SmoothCurrentHp
             // Snap instantly if damaged health exceeds max health bounds
@@ -224,30 +227,31 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 HpBeforeDamaged = SmoothCurrentHp;
             }
 
-            // Timer countdown for delayed drain/fill animations
-            if (_hpAnimationTimer > 0)
+            // Linear step based on max HP and user animation speed
+            float linearStep = maxHp * (KingdomHeartsPlugin.Ui.Configuration.HpAnimationSpeed * 0.015f) * KingdomHeartsPlugin.UiSpeed;
+            // Ensure a minimum movement speed
+            linearStep = Math.Max(linearStep, 1f);
+
+            // Independent damage timer and drain animation
+            if (_damageAnimationTimer > 0)
             {
-                _hpAnimationTimer -= KingdomHeartsPlugin.UiSpeed;
+                _damageAnimationTimer -= KingdomHeartsPlugin.UiSpeed;
             }
-            else
+            else if (HpBeforeDamaged > currentHp)
             {
-                // Linear step based on max HP and user animation speed
-                float linearStep = maxHp * (KingdomHeartsPlugin.Ui.Configuration.HpAnimationSpeed * 0.015f) * KingdomHeartsPlugin.UiSpeed;
+                HpBeforeDamaged -= linearStep;
+                if (HpBeforeDamaged < currentHp) HpBeforeDamaged = currentHp;
+            }
 
-                // Ensure a minimum movement speed
-                linearStep = Math.Max(linearStep, 1f);
-
-                if (HpBeforeDamaged > currentHp)
-                {
-                    HpBeforeDamaged -= linearStep;
-                    if (HpBeforeDamaged < currentHp) HpBeforeDamaged = currentHp;
-                }
-
-                if (HpTemp < currentHp)
-                {
-                    HpTemp += linearStep;
-                    if (HpTemp > currentHp) HpTemp = currentHp;
-                }
+            // Independent heal timer and fill animation (current health still interpolates)
+            if (_healAnimationTimer > 0)
+            {
+                _healAnimationTimer -= KingdomHeartsPlugin.UiSpeed;
+            }
+            else if (HpTemp < currentHp)
+            {
+                HpTemp += linearStep;
+                if (HpTemp > currentHp) HpTemp = currentHp;
             }
 
             // Alpha handling: keep solid while waiting/draining, fade out when done
@@ -450,7 +454,8 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         private float _flashAlpha { get; set; }
 
         // Timers
-        private float _hpAnimationTimer { get; set; }
+        private float _damageAnimationTimer { get; set; }
+        private float _healAnimationTimer { get; set; }
 
         // Positioning
         private float HealthY { get; set; }
