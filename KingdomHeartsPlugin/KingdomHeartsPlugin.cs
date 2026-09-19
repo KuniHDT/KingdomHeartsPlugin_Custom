@@ -6,7 +6,7 @@ using System.Globalization;
 using System.IO;
 using KingdomHeartsPlugin.Configuration;
 using KingdomHeartsPlugin.UIElements.Experience;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Dalamud.Plugin.Services;
 
 namespace KingdomHeartsPlugin
@@ -18,7 +18,7 @@ namespace KingdomHeartsPlugin
         private const string SettingsCommand = "/khpconfig";
         private const string ToggleCommand = "/khp";
 
-        public static string TemplateLocation;
+        public static string TemplateLocation = "";
 
         public KingdomHeartsPlugin(
             IDalamudPluginInterface pluginInterface,
@@ -28,8 +28,8 @@ namespace KingdomHeartsPlugin
             IGameGui gameGui,
             IDataManager dataManager,
             ITextureProvider textureProvider,
-            IPluginLog pluginLog
-
+            IPluginLog pluginLog,
+            IObjectTable objectTable
             )
         {
             Pi = pluginInterface;
@@ -40,13 +40,11 @@ namespace KingdomHeartsPlugin
             Dm = dataManager;
             Tp = textureProvider;
             Pl = pluginLog;
-
+            Ot = objectTable;
 
             Timer = Stopwatch.StartNew();
 
-            var assemblyLocation = pluginInterface.AssemblyLocation.DirectoryName + "\\";
-
-            TemplateLocation = Path.GetDirectoryName(assemblyLocation);
+            TemplateLocation = Path.GetDirectoryName(pluginInterface.AssemblyLocation.FullName!) ?? "";
 
             var configuration = Pi.GetPluginConfig() as Settings ?? new Settings();
             configuration.Initialize(Pi);
@@ -72,11 +70,6 @@ namespace KingdomHeartsPlugin
             Pi.UiBuilder.OpenMainUi += ToggleMainVisibility;
             Pi.UiBuilder.OpenConfigUi += DrawConfigUi;
             Cs.TerritoryChanged += OnTerritoryChange;
-
-            if (Cs.LocalPlayer != null)
-            {
-                IsInPvp = GetTerritoryPvP(Cs.TerritoryType);
-            }
         }
 
         public void Dispose()
@@ -98,6 +91,8 @@ namespace KingdomHeartsPlugin
 
         private void OnUpdate(IFramework framework)
         {
+            if (Timer is null) return;
+
             UiSpeed = Timer.ElapsedMilliseconds / 1000f;
             Timer.Restart();
             Ui.OnUpdate();
@@ -118,7 +113,7 @@ namespace KingdomHeartsPlugin
             Ui.Configuration.Save();
         }
 
-        private void OnTerritoryChange(ushort e)
+        private void OnTerritoryChange(uint e)
         {
             IsInPvp = GetTerritoryPvP(e);
         }
@@ -158,18 +153,18 @@ namespace KingdomHeartsPlugin
             }
         }
 
-        public static IDalamudPluginInterface Pi { get; private set; }
-        public static IFramework Fw { get; private set; }
-        public static ICommandManager Cm { get; private set; }
-        public static IClientState Cs { get; private set; }
-        public static IGameGui Gui { get; private set; }
-        public static IDataManager Dm { get; private set; }
-        public static IPluginLog Pl { get; private set; }
-        public static ITextureProvider Tp { get; private set; }
+        public static IDalamudPluginInterface Pi { get; private set; } = null!;
+        public static IFramework Fw { get; private set; } = null!;
+        public static ICommandManager Cm { get; private set; } = null!;
+        public static IClientState Cs { get; private set; } = null!;
+        public static IGameGui Gui { get; private set; } = null!;
+        public static IDataManager Dm { get; private set; } = null!;
+        public static IPluginLog Pl { get; private set; } = null!;
+        public static ITextureProvider Tp { get; private set; } = null!;
+        public static IObjectTable Ot { get; private set; } = null!;
+        public static PluginUI Ui { get; private set; } = null!;
 
-        public static PluginUI Ui { get; private set; }
-
-        public static Stopwatch Timer { get; private set; }
+        public static Stopwatch? Timer { get; private set; }
         public static float UiSpeed { get; set; }
         public static bool IsInPvp { get; private set; }
 

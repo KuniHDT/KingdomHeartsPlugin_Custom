@@ -1,15 +1,11 @@
 ﻿using Dalamud.Game.ClientState.Objects.SubKinds;
-using ImGuiNET;
-using ImGuiScene;
+using Dalamud.Bindings.ImGui;
 using KingdomHeartsPlugin.Utilities;
 using System;
 using System.IO;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using KingdomHeartsPlugin.Enums;
-using Dalamud.Interface.Internal;
 using Dalamud.Interface.Textures;
-using FFXIVClientStructs.Attributes;
 using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace KingdomHeartsPlugin.Configuration
@@ -68,16 +64,16 @@ namespace KingdomHeartsPlugin.UIElements.Experience
 
         private unsafe void Update(IPlayerCharacter player)
         {
-            _addonExp = (AddonExp*)KingdomHeartsPlugin.Gui.GetAddonByName("_Exp", 1);
+            _addonExp = (AddonExp*)KingdomHeartsPlugin.Gui.GetAddonByName("_Exp", 1).Address;
             try
             {
-                UpdateExperience(_addonExp->CurrentExp, _addonExp->RequiredExp, _addonExp->RestedExp, player.ClassJob.Id, player.Level);
+                UpdateExperience(_addonExp->CurrentExp, _addonExp->RequiredExp, _addonExp->RestedExp, player.ClassJob.RowId, player.Level);
             }
             catch
             {
                 try
                 {
-                    _addonExp = (AddonExp*)KingdomHeartsPlugin.Gui.GetAddonByName("_Exp", 1);
+                    _addonExp = (AddonExp*)KingdomHeartsPlugin.Gui.GetAddonByName("_Exp", 1).Address;
                 }
                 catch
                 {
@@ -153,16 +149,16 @@ namespace KingdomHeartsPlugin.UIElements.Experience
             if (KingdomHeartsPlugin.Ui.Configuration.ExpBarEnabled)
             {
 
-                ExperienceRingBg.Draw(drawList, 1, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                ExperienceRingBg?.Draw(drawList, 1, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
 
-                ExperienceRingRest.Draw(drawList, (Experience + RestedBonusExperience) / (float)MaxExperience, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                ExperienceRingRest?.Draw(drawList, (Experience + RestedBonusExperience) / (float)MaxExperience, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
 
-                ExperienceRingGain.Draw(drawList, Experience / (float)MaxExperience, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                ExperienceRingGain?.Draw(drawList, Experience / (float)MaxExperience, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
 
-                ExperienceRing.Draw(drawList, ExpTemp / MaxExperience, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                ExperienceRing?.Draw(drawList, ExpTemp / MaxExperience, drawPosition, 4, KingdomHeartsPlugin.Ui.Configuration.Scale);
 
                 drawList.PushClipRect(drawPosition, drawPosition + new Vector2(size, size));
-                drawList.AddImage(_expBarBaseTexture.GetWrapOrEmpty().ImGuiHandle, drawPosition, drawPosition + new Vector2(size, size));
+                drawList.AddImage(_expBarBaseTexture.GetWrapOrEmpty().Handle, drawPosition, drawPosition + new Vector2(size, size));
                 drawList.PopClipRect();
             }
 
@@ -172,10 +168,10 @@ namespace KingdomHeartsPlugin.UIElements.Experience
             {
                 float iconSize = KingdomHeartsPlugin.Ui.Configuration.ClassIconScale;
 
-                if (KingdomHeartsPlugin.Cs.LocalPlayer is null) return;
+                if (KingdomHeartsPlugin.Ot.LocalPlayer is null) return;
 
                 
-                ImageDrawing.DrawIcon(drawList, (ushort)(62000 + KingdomHeartsPlugin.Cs.LocalPlayer.ClassJob.Id),
+                ImageDrawing.DrawIcon(drawList, (ushort)(62000 + KingdomHeartsPlugin.Ot.LocalPlayer.ClassJob.RowId),
                     new Vector2(iconSize, iconSize),
                     //new Vector2((int)(size / 2f), (int)(size / 2f + 18 * KingdomHeartsPlugin.Ui.Configuration.Scale)) +
                     new Vector2((int)(KingdomHeartsPlugin.Ui.Configuration.ClassIconX), (int)(KingdomHeartsPlugin.Ui.Configuration.ClassIconY)) +
@@ -184,7 +180,7 @@ namespace KingdomHeartsPlugin.UIElements.Experience
 
             if (KingdomHeartsPlugin.Ui.Configuration.LevelEnabled)
                 ImGuiAdditions.TextShadowedDrawList(drawList, KingdomHeartsPlugin.Ui.Configuration.LevelTextSize,
-                    $"Lv{KingdomHeartsPlugin.Cs.LocalPlayer.Level}",
+                    $"Lv{KingdomHeartsPlugin.Ot.LocalPlayer?.Level}",
                     drawPosition + new Vector2(KingdomHeartsPlugin.Ui.Configuration.LevelTextX, KingdomHeartsPlugin.Ui.Configuration.LevelTextY) * KingdomHeartsPlugin.Ui.Configuration.Scale,
                     new Vector4(249 / 255f, 247 / 255f, 232 / 255f, 0.9f),
                     new Vector4(96 / 255f, 78 / 255f, 23 / 255f, 0.25f), 3,
@@ -202,10 +198,10 @@ namespace KingdomHeartsPlugin.UIElements.Experience
 
         public unsafe void Dispose()
         {
-            ExperienceRing.Dispose();
-            ExperienceRingRest.Dispose();
-            ExperienceRingGain.Dispose();
-            ExperienceRingBg.Dispose();
+            ExperienceRing?.Dispose();
+            ExperienceRingRest?.Dispose();
+            ExperienceRingGain?.Dispose();
+            ExperienceRingBg?.Dispose();
 
             ExperienceRing = null;
             ExperienceRingRest = null;
@@ -223,9 +219,9 @@ namespace KingdomHeartsPlugin.UIElements.Experience
         private uint ExpBeforeGain { get; set; }
         private float ExpTemp { get; set; }
         private float ExpGainTime { get; set; }
-        private Ring ExperienceRing { get; set; }
-        private Ring ExperienceRingRest { get; set; }
-        private Ring ExperienceRingGain { get; set; }
-        private Ring ExperienceRingBg { get; set; }
+        private Ring? ExperienceRing { get; set; }
+        private Ring? ExperienceRingRest { get; set; }
+        private Ring? ExperienceRingGain { get; set; }
+        private Ring? ExperienceRingBg { get; set; }
     }
 }
