@@ -43,7 +43,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         public unsafe void Draw()
         {
             var player = KingdomHeartsPlugin.Ot.LocalPlayer;
-            var parameterWidget = (AtkUnitBase*) KingdomHeartsPlugin.Gui.GetAddonByName("_ParameterWidget", 1).Address;
+            var parameterWidget = (AtkUnitBase*)KingdomHeartsPlugin.Gui.GetAddonByName("_ParameterWidget", 1).Address;
 
             if (parameterWidget != null && !parameterWidget->IsVisible)
             {
@@ -73,19 +73,50 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
             if (KingdomHeartsPlugin.Ui.Configuration.ShowHpVal && KingdomHeartsPlugin.Ui.Configuration.HpBarEnabled)
             {
+                var hpText = StringFormatting.FormatDigits(player.CurrentHp, (NumberFormatStyle)KingdomHeartsPlugin.Ui.Configuration.HpValueTextStyle);
                 var rawPosition = ImGui.GetItemRectMin() + new Vector2(KingdomHeartsPlugin.Ui.Configuration.HpValueTextPositionX, KingdomHeartsPlugin.Ui.Configuration.HpValueTextPositionY) * KingdomHeartsPlugin.Ui.Configuration.Scale;
-
-                // Snap to the pixel grid to eliminate ImGui sub-pixel blur
                 var basePosition = new Vector2((float)Math.Round(rawPosition.X), (float)Math.Round(rawPosition.Y));
 
-                ImGuiAdditions.TextShadowedDrawList(drawList,
-                    KingdomHeartsPlugin.Ui.Configuration.HpValueTextSize,
-                    $"{StringFormatting.FormatDigits(player.CurrentHp, (NumberFormatStyle)KingdomHeartsPlugin.Ui.Configuration.HpValueTextStyle)}",
-                    basePosition,
-                    new Vector4(255 / 255f, 255 / 255f, 255 / 255f, 1f),
-                    new Vector4(0 / 255f, 0 / 255f, 0 / 255f, 0.25f), 3, (TextAlignment)KingdomHeartsPlugin.Ui.Configuration.HpValueTextAlignment);
+                var fontHandle = KingdomHeartsPlugin.HpFont;
+
+                // Check if the font handle is loaded and ready
+                if (fontHandle != null && fontHandle.Available)
+                {
+                    // Push the custom font onto the ImGui stack
+                    using (fontHandle.Push())
+                    {
+                        // Calculate scale down factor relative to the 40pt baked size
+                        float targetScale = (KingdomHeartsPlugin.Ui.Configuration.HpValueTextSize * KingdomHeartsPlugin.Ui.Configuration.Scale) / 40.0f;
+                        ImGui.SetWindowFontScale(targetScale);
+
+                        uint textColor = ImGui.ColorConvertFloat4ToU32(new Vector4(1f, 1f, 1f, 1f));
+                        uint shadowColor = ImGui.ColorConvertFloat4ToU32(new Vector4(0f, 0f, 0f, 0.65f));
+
+                        float offset = 2f * KingdomHeartsPlugin.Ui.Configuration.Scale;
+
+                        // Draw shadow/outline
+                        drawList.AddText(basePosition + new Vector2(offset, offset), shadowColor, hpText);
+
+                        // Draw main text
+                        drawList.AddText(basePosition, textColor, hpText);
+
+                        // Reset font scale
+                        ImGui.SetWindowFontScale(1.0f);
+                    }
+                }
+                else
+                {
+                    // Fallback drawing routine while font loads
+                    ImGuiAdditions.TextShadowedDrawList(drawList,
+                        KingdomHeartsPlugin.Ui.Configuration.HpValueTextSize,
+                        hpText,
+                        basePosition,
+                        new Vector4(1f, 1f, 1f, 1f),
+                        new Vector4(0f, 0f, 0f, 0.25f), 3, (TextAlignment)KingdomHeartsPlugin.Ui.Configuration.HpValueTextAlignment);
+                }
             }
         }
+
 
         private void UpdateHealth(IPlayerCharacter player)
         {

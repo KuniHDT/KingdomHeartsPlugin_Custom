@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
-using Dalamud.Game.Command;
+﻿using Dalamud.Game.Command;
+using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Plugin;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
+using Dalamud.Plugin.Services;
 using KingdomHeartsPlugin.Configuration;
 using KingdomHeartsPlugin.UIElements.Experience;
 using Lumina.Excel.Sheets;
-using Dalamud.Plugin.Services;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 
 namespace KingdomHeartsPlugin
 {
@@ -19,6 +20,7 @@ namespace KingdomHeartsPlugin
         private const string ToggleCommand = "/khp";
 
         public static string TemplateLocation = "";
+        public static IFontHandle? HpFont { get; private set; }
 
         public KingdomHeartsPlugin(
             IDalamudPluginInterface pluginInterface,
@@ -42,12 +44,24 @@ namespace KingdomHeartsPlugin
             Pl = pluginLog;
             Ot = objectTable;
 
+
             Timer = Stopwatch.StartNew();
 
             TemplateLocation = Path.GetDirectoryName(pluginInterface.AssemblyLocation.FullName!) ?? "";
 
             var configuration = Pi.GetPluginConfig() as Settings ?? new Settings();
             configuration.Initialize(Pi);
+
+            Ui = new PluginUI(configuration);
+
+            HpFont = Pi.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(tk =>
+            {
+                // Loads a standard font file at 40pt for crisp scaling
+                tk.AddFontFromFile(
+                    System.IO.Path.Combine(TemplateLocation, @"Textures\Fonts\YourFont.ttf"),
+                    new SafeFontConfig { SizePt = 40.0f }
+                );
+            }));
 
             Ui = new PluginUI(configuration);
 
@@ -75,6 +89,7 @@ namespace KingdomHeartsPlugin
         public void Dispose()
         {
             Ui?.Dispose();
+            HpFont?.Dispose();
 
             Cm.RemoveHandler(SettingsCommand);
             Cm.RemoveHandler(ToggleCommand);
