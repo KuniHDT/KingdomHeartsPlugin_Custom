@@ -1,4 +1,4 @@
-﻿using Dalamud.Utility;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Dalamud.Bindings.ImGui;
 using KingdomHeartsPlugin.Configuration;
@@ -16,22 +16,12 @@ using Dalamud.Interface.Utility;
 
 namespace KingdomHeartsPlugin
 {
-    // It is good to have this be disposable in general, in case you ever need it
-    // to do any cleanup
     public class PluginUI : IDisposable
     {
         internal Settings Configuration;
         public readonly HealthFrame HealthFrame;
         private readonly FileDialogManager _dialogManager;
-        /*private TextureWrap _testTextureWrap;
-        private float _width;
-        private float _height;
-        private float[] pos;
-        private float[] pos2;
-        private float[] uv;
-        private float[] uv2;*/
 
-        // this extra bool exists for ImGui, since you can't ref a property
         private bool visible = true;
         public bool Visible
         {
@@ -46,20 +36,11 @@ namespace KingdomHeartsPlugin
             set => settingsVisible = value;
         }
 
-        // passing in the image here just for simplicity
         public PluginUI(Settings configuration)
         {
             Configuration = configuration;
             HealthFrame = new HealthFrame();
             _dialogManager = SetupDialogManager();
-
-            /*_testTextureWrap = KingdomHeartsPlugin.Pi.UiBuilder.LoadImage(Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\LimitGauge\number_2.png"));
-            pos = new float[4];
-            pos2 = new float[4];
-            uv = new float[4];
-            uv2 = new float[4];
-            _width = 256;
-            _height = 256;*/
         }
 
         public void Dispose()
@@ -67,7 +48,6 @@ namespace KingdomHeartsPlugin
             HealthFrame?.Dispose();
             Portrait.Dispose();
             ImageDrawing.Dispose();
-            //_testTextureWrap?.Dispose();
         }
 
         public void OnUpdate()
@@ -76,13 +56,6 @@ namespace KingdomHeartsPlugin
 
         public void Draw()
         {
-            // This is our only draw handler attached to UIBuilder, so it needs to be
-            // able to draw any windows we might have open.
-            // Each method checks its own visibility/state to ensure it only draws when
-            // it actually makes sense.
-            // There are other ways to do this, but it is generally best to keep the number of
-            // draw delegates as low as possible.
-
             DrawMainWindow();
             DrawSettingsWindow();
         }
@@ -97,7 +70,6 @@ namespace KingdomHeartsPlugin
             {
                 return;
             }
-
 
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags.NoTitleBar;
@@ -138,77 +110,23 @@ namespace KingdomHeartsPlugin
         {
             if (!ImGui.BeginTabItem("General")) return;
 
+            SectionHeader("Visibility & State");
             var enabled = Configuration.Enabled;
-            if (ImGui.Checkbox("Visible", ref enabled))
-            {
-                Configuration.Enabled = enabled;
-            }
+            if (ImGui.Checkbox("Visible", ref enabled)) Configuration.Enabled = enabled;
+
             var hideWhenNpcTalking = Configuration.HideWhenNpcTalking;
-            if (ImGui.Checkbox("Hide when dialogue box is shown", ref hideWhenNpcTalking))
-            {
-                Configuration.HideWhenNpcTalking = hideWhenNpcTalking;
-            }
+            if (ImGui.Checkbox("Hide when dialogue box is shown", ref hideWhenNpcTalking)) Configuration.HideWhenNpcTalking = hideWhenNpcTalking;
 
             var locked = Configuration.Locked;
-            if (ImGui.Checkbox("Locked", ref locked))
-            {
-                Configuration.Locked = locked;
-            }
+            if (ImGui.Checkbox("Lock UI Position", ref locked)) Configuration.Locked = locked;
 
+            ImGui.Spacing();
+            SectionHeader("Transform");
             var scale = Configuration.Scale;
-            if (ImGui.InputFloat("Scale", ref scale, 0.025f, 0.1f))
+            if (ImGui.SliderFloat("Overall Scale", ref scale, 0.25f, 3.0f, "%.2f"))
             {
                 Configuration.Scale = scale;
-                if (Configuration.Scale < 0.25f)
-                    Configuration.Scale = 0.25f;
-                if (Configuration.Scale > 3)
-                    Configuration.Scale = 3;
             }
-
-            /*ImGui.NewLine();
-                ImGui.Separator();
-
-                ImGui.SliderFloat("Width", ref _width, 0, 512);
-                ImGui.SliderFloat("Height", ref _height, 0, 512);
-                ImGui.SliderFloat("Pos[0]", ref pos[0], 0, 256);
-                ImGui.SliderFloat("Pos[1]", ref pos[1], 0, 256);
-                ImGui.SliderFloat("Pos[2]", ref pos[2], 0, 256);
-                ImGui.SliderFloat("Pos[3]", ref pos[3], 0, 256);
-                ImGui.SliderFloat("Pos2[0]", ref pos2[0], 0, 256);
-                ImGui.SliderFloat("Pos2[1]", ref pos2[1], 0, 256);
-                ImGui.SliderFloat("Pos2[2]", ref pos2[2], 0, 256);
-                ImGui.SliderFloat("Pos2[3]", ref pos2[3], 0, 256);
-                ImGui.SliderFloat("UV[0]", ref uv[0], 0, 1);
-                ImGui.SliderFloat("UV[1]", ref uv[1], 0, 1);
-                ImGui.SliderFloat("UV[2]", ref uv[2], 0, 1);
-                ImGui.SliderFloat("UV[3]", ref uv[3], 0, 1);
-                ImGui.SliderFloat("UV2[0]", ref uv2[0], 0, 1);
-                ImGui.SliderFloat("UV2[1]", ref uv2[1], 0, 1);
-                ImGui.SliderFloat("UV2[2]", ref uv2[2], 0, 1);
-                ImGui.SliderFloat("UV2[3]", ref uv2[3], 0, 1);
-
-                ImGui.NewLine();
-
-                //ImGui.Image(_testTextureWrap.Handle, new Vector2(pos[0], pos[1]), new Vector2(uv[0], uv[1]), new Vector2(uv[2], uv[3]));
-
-                var dl = ImGui.GetWindowDrawList();
-                ImGui.Dummy(new Vector2(_width, _height));
-                double width = _testTextureWrap.Width;
-                double height = _testTextureWrap.Height;
-                Vector2 position = ImGui.GetItemRectMin();
-
-                dl.PushClipRect(position - new Vector2(0, 0), position + new Vector2(_width, _height));
-                dl.AddImageQuad(_testTextureWrap.Handle, 
-                    position + new Vector2((pos[0]), (pos[1])), 
-                    position + new Vector2((pos[2]), (pos[3])),
-                    position + new Vector2((pos2[0]), (pos2[1])),
-                    position + new Vector2((pos2[2]), (pos2[3]))/*,
-                    position + new Vector2((uv[0]), (uv[1])), 
-                    position + new Vector2((uv[2]), (uv[3])),
-                    position + new Vector2((uv2[0]), (uv2[1])),
-                    position + new Vector2((uv2[2]), (uv2[3]))
-                    );
-                dl.PopClipRect();*/
 
             ImGui.EndTabItem();
         }
@@ -218,283 +136,105 @@ namespace KingdomHeartsPlugin
             if (!ImGui.BeginTabItem("Health")) return;
 
             var enabled = Configuration.HpBarEnabled;
-            if (ImGui.Checkbox("Enabled", ref enabled))
+            if (ImGui.Checkbox("Enable Health Bar", ref enabled)) Configuration.HpBarEnabled = enabled;
+
+            ImGui.Spacing();
+            SectionHeader("Standard Length Scaling");
+            ImGui.Indent();
+
+            var fullRing = Configuration.HpForFullRing;
+            if (ImGui.InputInt("HP for full ring", ref fullRing, 5, 50)) Configuration.HpForFullRing = Math.Max(1, fullRing);
+            HoverTooltip($"How much HP will make the ring max out, then goes long bar.\nDefault: {Defaults.HpForFullRing}");
+
+            var hpPerPixel = Configuration.HpPerPixelLongBar;
+            if (ImGui.InputFloat("HP per pixel for long bar", ref hpPerPixel, 5, 50)) Configuration.HpPerPixelLongBar = Math.Max(0.0001f, hpPerPixel);
+            HoverTooltip($"Defines the width of the long bar.\nDefault: {Defaults.HpPerPixelLongBar}");
+
+            var minLength = Configuration.MinimumHpForLength;
+            if (ImGui.InputInt("Max HP for minimum length", ref minLength, 5, 50)) Configuration.MinimumHpForLength = Math.Max(1, minLength);
+            HoverTooltip($"Defines when the total bar size will stop getting smaller.\nDefault: {Defaults.MinimumHpForLength}");
+
+            var maxLength = Configuration.MaximumHpForMaximumLength;
+            if (ImGui.InputInt("Max HP for maximum total length", ref maxLength, 5, 50)) Configuration.MaximumHpForMaximumLength = Math.Max(1, maxLength);
+            HoverTooltip($"Defines when the total bar size will stop getting larger.\nDefault: {Defaults.MaximumHpForMaximumLength}");
+
+            var lengthByLevel = Configuration.LengthByLevel;
+            if (ImGui.Checkbox("Scale Max Length by Level", ref lengthByLevel)) Configuration.LengthByLevel = lengthByLevel;
+            HoverTooltip("Overrides manual Max HP limits. Replaces actual Max HP with a simulated pool based on Level.");
+
+            if (Configuration.LengthByLevel)
             {
-                Configuration.HpBarEnabled = enabled;
+                ImGui.Indent();
+                var hpPerLevel = Configuration.HpPerLevel;
+                if (ImGui.InputInt("Simulated HP added per Level", ref hpPerLevel, 10, 100)) Configuration.HpPerLevel = Math.Max(1, hpPerLevel);
+                ImGui.Unindent();
             }
-            ImGui.NewLine();
-            ImGui.Separator();
-            ImGui.Text("Length");
-            ImGui.Separator();
-            if (ImGui.TreeNode("Standard"))
-            {
-                ImGui.BeginGroup();
+            ImGui.Unindent();
 
-                var fullRing = Configuration.HpForFullRing;
-                if (ImGui.InputInt("HP for full ring", ref fullRing, 5, 50))
-                {
-                    Configuration.HpForFullRing = fullRing;
-                    if (Configuration.HpForFullRing < 1)
-                        Configuration.HpForFullRing = 1;
-                }
+            ImGui.Spacing();
+            SectionHeader("PvP Length Scaling");
+            ImGui.Indent();
 
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text($"How much HP will make the ring max out, then goes long bar.\n\nDefault: {Defaults.HpForFullRing}");
-                    ImGui.End();
-                }
+            var fullRingPvp = Configuration.PvpHpForFullRing;
+            if (ImGui.InputInt("PvP HP for full ring", ref fullRingPvp, 5, 50)) Configuration.PvpHpForFullRing = Math.Max(1, fullRingPvp);
 
-                var hpPerPixel = Configuration.HpPerPixelLongBar;
-                if (ImGui.InputFloat("HP per pixel for long bar", ref hpPerPixel, 5, 50))
-                {
-                    Configuration.HpPerPixelLongBar = hpPerPixel;
-                    if (Configuration.HpPerPixelLongBar < 0.0001f)
-                        Configuration.HpPerPixelLongBar = 0.0001f;
-                }
+            var hpPerPixelPvp = Configuration.PvpHpPerPixelLongBar;
+            if (ImGui.InputFloat("PvP HP per pixel long bar", ref hpPerPixelPvp, 5, 50)) Configuration.PvpHpPerPixelLongBar = Math.Max(0.0001f, hpPerPixelPvp);
 
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text($"Defines the width of the long bar.\n100 would mean that every 100 HP over the value set for HP for full ring, the bar is 1 pixel wider.\n\nDefault: {Defaults.HpPerPixelLongBar}");
-                    ImGui.End();
-                }
+            var minLengthPvp = Configuration.PvpMinimumHpForLength;
+            if (ImGui.InputInt("PvP Max HP for min length", ref minLengthPvp, 5, 50)) Configuration.PvpMinimumHpForLength = Math.Max(1, minLengthPvp);
 
-                var maxLength = Configuration.MaximumHpForMaximumLength;
-                if (ImGui.InputInt("Max HP for maximum total length", ref maxLength, 5, 50))
-                {
-                    Configuration.MaximumHpForMaximumLength = maxLength;
-                    if (Configuration.MaximumHpForMaximumLength < 1)
-                        Configuration.MaximumHpForMaximumLength = 1;
-                }
+            var maxLengthPvp = Configuration.PvpMaximumHpForMaximumLength;
+            if (ImGui.InputInt("PvP Max HP for max length", ref maxLengthPvp, 5, 50)) Configuration.PvpMaximumHpForMaximumLength = Math.Max(1, maxLengthPvp);
 
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text(
-                        $"Defines when the total bar size, including the ring, will stop getting larger.\n10000 would make the bar stop getting longer at 10000 MaxHP. Prevents an HP bar that's too big.\n\nDefault: {Defaults.MaximumHpForMaximumLength}");
-                    ImGui.End();
-                }
+            ImGui.Unindent();
 
-                var minLength = Configuration.MinimumHpForLength;
-                if (ImGui.InputInt("Max HP for minimum length", ref minLength, 5, 50))
-                {
-                    Configuration.MinimumHpForLength = minLength;
-                    if (Configuration.MinimumHpForLength < 1)
-                        Configuration.MinimumHpForLength = 1;
-                }
-
-
-
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text(
-                        $"Defines when the total bar size, including the ring, will stop getting smaller.\n1000 would make the bar stop getting smaller at 1000 MaxHP. Prevents an HP bar that's too small.\n\nDefault: {Defaults.MinimumHpForLength}");
-                    ImGui.End();
-                }
-
-                ImGui.Separator();
-                var lengthByLevel = Configuration.LengthByLevel;
-                if (ImGui.Checkbox("Scale Max Length by Level", ref lengthByLevel))
-                {
-                    Configuration.LengthByLevel = lengthByLevel;
-                }
-
-                if (Configuration.LengthByLevel)
-                {
-                    var hpPerLevel = Configuration.HpPerLevel;
-                    if (ImGui.InputInt("Simulated HP added per Level", ref hpPerLevel, 10, 100))
-                    {
-                        Configuration.HpPerLevel = hpPerLevel;
-                        if (Configuration.HpPerLevel < 1)
-                            Configuration.HpPerLevel = 1;
-                    }
-                    if (ImGui.IsItemHovered())
-                    {
-                        Tooltip("Overrides manual Max HP limits. Replaces your actual Max HP with a simulated pool based on (Level * this value) + Minimum Length to determine bar size.");
-                    }
-                }
-
-                ImGui.EndGroup();
-                ImGui.TreePop();
-            }
-
-            if (ImGui.TreeNode("PvP"))
-            {
-                ImGui.BeginGroup();
-
-                var fullRing = Configuration.PvpHpForFullRing;
-                if (ImGui.InputInt("HP for full ring", ref fullRing, 5, 50))
-                {
-                    Configuration.PvpHpForFullRing = fullRing;
-                    if (Configuration.PvpHpForFullRing < 1)
-                        Configuration.PvpHpForFullRing = 1;
-                }
-
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text($"How much HP will make the ring max out, then goes long bar.\n\nDefault: {Defaults.PvpHpForFullRing}");
-                    ImGui.End();
-                }
-
-                var hpPerPixel = Configuration.PvpHpPerPixelLongBar;
-                if (ImGui.InputFloat("HP per pixel for long bar", ref hpPerPixel, 5, 50))
-                {
-                    Configuration.PvpHpPerPixelLongBar = hpPerPixel;
-                    if (Configuration.PvpHpPerPixelLongBar < 0.0001f)
-                        Configuration.PvpHpPerPixelLongBar = 0.0001f;
-                }
-
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text($"Defines the width of the long bar.\n100 would mean that every 100 HP over the value set for HP for full ring, the bar is 1 pixel wider.\n\nDefault: {Defaults.PvpHpPerPixelLongBar}");
-                    ImGui.End();
-                }
-
-                var maxLength = Configuration.PvpMaximumHpForMaximumLength;
-                if (ImGui.InputInt("Max HP for maximum total length", ref maxLength, 5, 50))
-                {
-                    Configuration.PvpMaximumHpForMaximumLength = maxLength;
-                    if (Configuration.PvpMaximumHpForMaximumLength < 1)
-                        Configuration.PvpMaximumHpForMaximumLength = 1;
-                }
-
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text(
-                        $"Defines when the total bar size, including the ring, will stop getting larger.\n10000 would make the bar stop getting longer at 10000 MaxHP. Prevents an HP bar that's too big.\n\nDefault: {Defaults.PvpMaximumHpForMaximumLength}");
-                    ImGui.End();
-                }
-
-                var minLength = Configuration.PvpMinimumHpForLength;
-                if (ImGui.InputInt("Max HP for minimum length", ref minLength, 5, 50))
-                {
-                    Configuration.PvpMinimumHpForLength = minLength;
-                    if (Configuration.PvpMinimumHpForLength < 1)
-                        Configuration.PvpMinimumHpForLength = 1;
-                }
-
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text(
-                        $"Defines when the total bar size, including the ring, will stop getting smaller.\n1000 would make the bar stop getting smaller at 1000 MaxHP. Prevents an HP bar that's too small.\n\nDefault: {Defaults.PvpMinimumHpForLength}");
-                    ImGui.End();
-                }
-
-                ImGui.EndGroup();
-                ImGui.TreePop();
-            }
-
-            ImGui.Separator();
-            ImGui.NewLine();
-            ImGui.Text("Value Text");
-            ImGui.Separator();
-
-            var hpTextPos = new Vector2(Configuration.HpValueTextPositionX, Configuration.HpValueTextPositionY);
-            if (ImGui.DragFloat2("Text Position (X, Y)", ref hpTextPos))
-            {
-                Configuration.HpValueTextPositionX = hpTextPos.X;
-                Configuration.HpValueTextPositionY = hpTextPos.Y;
-            }
-
-            var hpTextSize = Configuration.HpValueTextSize;
-            if (ImGui.InputFloat("Text Size", ref hpTextSize))
-            {
-                Configuration.HpValueTextSize = hpTextSize;
-            }
-
-            if (ImGui.BeginCombo("Text Alignment", Enum.GetName((TextAlignment)Configuration.HpValueTextAlignment)))
-            {
-                var alignments = Enum.GetNames(typeof(TextAlignment));
-                for (int i = 0; i < alignments.Length; i++)
-                {
-                    if (ImGui.Selectable(alignments[i]))
-                    {
-                        Configuration.HpValueTextAlignment = i;
-                    }
-                }
-                ImGui.EndCombo();
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("TT1", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text("Please note that center and right alignments are not perfect and may not hold the same position.");
-                ImGui.End();
-            }
-            
-            if (ImGui.BeginCombo("Text Formatting", Configuration.HpValueTextStyle.GetDescription()))
-            {
-                var styles = (NumberFormatStyle[])Enum.GetValues(typeof(NumberFormatStyle));
-                for (int i = 0; i < styles.Length; i++)
-                {
-                    if (ImGui.Selectable($"{styles[i].GetDescription()} ({StringFormatting.FormatDigits(1234567, (NumberFormatStyle)i)}) ({StringFormatting.FormatDigits(54321, (NumberFormatStyle)i)})"))
-                    {
-                        Configuration.HpValueTextStyle = (NumberFormatStyle)i;
-                    }
-                }
-                ImGui.EndCombo();
-            }
+            ImGui.Spacing();
+            SectionHeader("Value Text");
 
             var showHpVal = Configuration.ShowHpVal;
-            if (ImGui.Checkbox("Show HP Value", ref showHpVal))
+            if (ImGui.Checkbox("Show HP Value", ref showHpVal)) Configuration.ShowHpVal = showHpVal;
+
+            if (Configuration.ShowHpVal)
             {
-                Configuration.ShowHpVal = showHpVal;
+                ImGui.Indent();
+                var hpTextPos = new Vector2(Configuration.HpValueTextPositionX, Configuration.HpValueTextPositionY);
+                if (ImGui.DragFloat2("Text Position (X, Y)", ref hpTextPos))
+                {
+                    Configuration.HpValueTextPositionX = hpTextPos.X;
+                    Configuration.HpValueTextPositionY = hpTextPos.Y;
+                }
+
+                var hpTextSize = Configuration.HpValueTextSize;
+                if (ImGui.InputFloat("Text Size", ref hpTextSize)) Configuration.HpValueTextSize = hpTextSize;
+
+                Configuration.HpValueTextAlignment = (int)DrawEnumCombo("Text Alignment", (TextAlignment)Configuration.HpValueTextAlignment);
+                HoverTooltip("Center and right alignments may not hold perfect positioning.");
+
+                Configuration.HpValueTextStyle = DrawEnumCombo("Text Formatting", Configuration.HpValueTextStyle,
+                    val => $"{val.GetDescription()} ({StringFormatting.FormatDigits(1234567, val)})");
+                ImGui.Unindent();
             }
 
-
-            ImGui.Separator();
-            ImGui.NewLine();
-            ImGui.Text("Miscellaneous");
-            ImGui.Separator();
-
+            ImGui.Spacing();
+            SectionHeader("Effects & Misc");
             var lowHpPercent = Configuration.LowHpPercent;
-            if (ImGui.SliderFloat("Percent To Trigger Low HP", ref lowHpPercent, 0, 100))
-            {
-                Configuration.LowHpPercent = lowHpPercent;
-            }
+            if (ImGui.SliderFloat("Trigger Low HP Warning (%)", ref lowHpPercent, 0, 100)) Configuration.LowHpPercent = lowHpPercent;
 
             var hpDamageWobbleIntensity = Configuration.HpDamageWobbleIntensity;
-            if (ImGui.SliderFloat("Damage wobble intensity %", ref hpDamageWobbleIntensity, 0, 200))
-            {
-                Configuration.HpDamageWobbleIntensity = hpDamageWobbleIntensity;
-            }
+            if (ImGui.SliderFloat("Damage Wobble Intensity (%)", ref hpDamageWobbleIntensity, 0, 200)) Configuration.HpDamageWobbleIntensity = hpDamageWobbleIntensity;
 
             var showHpRecovery = Configuration.ShowHpRecovery;
-            if (ImGui.Checkbox("Show HP Recovery", ref showHpRecovery))
-            {
-                Configuration.ShowHpRecovery = showHpRecovery;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("TT2", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text("Shows a blue bar for when HP is recovered then gradually fills the green bar.");
-                ImGui.End();
-            }
+            if (ImGui.Checkbox("Show HP Recovery Animation", ref showHpRecovery)) Configuration.ShowHpRecovery = showHpRecovery;
+            HoverTooltip("Shows a blue bar for when HP is recovered then gradually fills the green bar.");
+
+            var hpAnimSpeed = Configuration.HpAnimationSpeed;
+            if (ImGui.SliderFloat("Animation Speed (% Max HP/s)", ref hpAnimSpeed, 10f, 200f)) Configuration.HpAnimationSpeed = hpAnimSpeed;
+            HoverTooltip("How fast the damaged/restored HP catches up to current HP.");
+
+            var hpAnimDelay = Configuration.HpAnimationDelay;
+            if (ImGui.SliderFloat("Animation Delay (s)", ref hpAnimDelay, 0f, 3f)) Configuration.HpAnimationDelay = hpAnimDelay;
+            HoverTooltip("How long to wait before the HP drain/fill animation starts after a change.");
 
             ImGui.EndTabItem();
         }
@@ -503,14 +243,10 @@ namespace KingdomHeartsPlugin
         {
             if (!ImGui.BeginTabItem("MP/GP/CP")) return;
 
+            SectionHeader("General Options");
             var enabled = Configuration.ResourceBarEnabled;
-            if (ImGui.Checkbox("Enabled", ref enabled))
-            {
-                Configuration.ResourceBarEnabled = enabled;
-            }
-            ImGui.NewLine();
-            ImGui.Separator();
-            ImGui.Text("Position");
+            if (ImGui.Checkbox("Enable Resource Bar", ref enabled)) Configuration.ResourceBarEnabled = enabled;
+
             var resourcePos = new Vector2(Configuration.ResourceBarPositionX, Configuration.ResourceBarPositionY);
             if (ImGui.DragFloat2("Position (X, Y)", ref resourcePos))
             {
@@ -518,277 +254,95 @@ namespace KingdomHeartsPlugin
                 Configuration.ResourceBarPositionY = resourcePos.Y;
             }
 
-            ImGui.Separator();
-            ImGui.NewLine();
-            ImGui.Text("Value Text");
-            ImGui.Separator();
-
+            ImGui.Spacing();
+            SectionHeader("Value Text");
             var showVal = Configuration.ShowResourceVal;
-            if (ImGui.Checkbox("Show Resource Value", ref showVal))
-            {
-                Configuration.ShowResourceVal = showVal;
-            }
-            var resourceTextPos = new Vector2(Configuration.ResourceTextPositionX, Configuration.ResourceTextPositionY);
-            if (ImGui.DragFloat2("Text Position (X, Y)", ref resourceTextPos))
-            {
-                Configuration.ResourceTextPositionX = resourceTextPos.X;
-                Configuration.ResourceTextPositionY = resourceTextPos.Y;
-            }
+            if (ImGui.Checkbox("Show Resource Value", ref showVal)) Configuration.ShowResourceVal = showVal;
 
-            var resourceTextSize = Configuration.ResourceTextSize;
-            if (ImGui.InputFloat("Text Size", ref resourceTextSize))
+            if (Configuration.ShowResourceVal)
             {
-                Configuration.ResourceTextSize = resourceTextSize;
-            }
-
-            if (ImGui.BeginCombo("Text Alignment", Enum.GetName((TextAlignment)Configuration.ResourceTextAlignment)))
-            {
-                var alignments = Enum.GetNames(typeof(TextAlignment));
-                for (int i = 0; i < alignments.Length; i++)
+                ImGui.Indent();
+                var resourceTextPos = new Vector2(Configuration.ResourceTextPositionX, Configuration.ResourceTextPositionY);
+                if (ImGui.DragFloat2("Text Position (X, Y)", ref resourceTextPos))
                 {
-                    if (ImGui.Selectable(alignments[i]))
-                    {
-                        Configuration.ResourceTextAlignment = i;
-                    }
+                    Configuration.ResourceTextPositionX = resourceTextPos.X;
+                    Configuration.ResourceTextPositionY = resourceTextPos.Y;
                 }
-                ImGui.EndCombo();
+
+                var resourceTextSize = Configuration.ResourceTextSize;
+                if (ImGui.InputFloat("Text Size", ref resourceTextSize)) Configuration.ResourceTextSize = resourceTextSize;
+
+                Configuration.ResourceTextAlignment = (int)DrawEnumCombo("Text Alignment", (TextAlignment)Configuration.ResourceTextAlignment);
+                Configuration.ResourceTextStyle = DrawEnumCombo("Text Formatting", Configuration.ResourceTextStyle, 
+                    val => $"{val.GetDescription()} ({StringFormatting.FormatDigits(10000, val)})");
+                ImGui.Unindent();
             }
 
-            if (ImGui.BeginCombo("Text Formatting", Configuration.ResourceTextStyle.GetDescription()))
-            {
-                var styles = (NumberFormatStyle[])Enum.GetValues(typeof(NumberFormatStyle));
-                for (int i = 0; i < styles.Length; i++)
-                {
-                    if (ImGui.Selectable($"{styles[i].GetDescription()} ({StringFormatting.FormatDigits(10000, (NumberFormatStyle)i)})"))
-                    {
-                        Configuration.ResourceTextStyle = (NumberFormatStyle)i;
-                    }
-                }
-                ImGui.EndCombo();
-            }
-
-            ImGui.Separator();
-            ImGui.NewLine();
-            ImGui.Text("Length");
-            ImGui.Separator();
-
+            ImGui.Spacing();
+            SectionHeader("Scaling Options");
+            
             var resourceLengthByLevel = Configuration.ResourceLengthByLevel;
-            if (ImGui.Checkbox("Scale Max Length by Level##Resource", ref resourceLengthByLevel))
-            {
-                Configuration.ResourceLengthByLevel = resourceLengthByLevel;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Tooltip("Overrides manual Max length limits. Replaces actual max resource with a simulated pool based on (Level * per-level value) + Minimum Length.");
-            }
+            if (ImGui.Checkbox("Scale Max Length by Level##Resource", ref resourceLengthByLevel)) Configuration.ResourceLengthByLevel = resourceLengthByLevel;
+            HoverTooltip("Overrides manual limits with a simulated pool based on Level.");
 
-            ImGui.Text("MP");
-            ImGui.Separator();
-
+            ImGui.Spacing();
+            ImGui.TextColored(new Vector4(0.5f, 0.8f, 1f, 1f), "MP Setup");
             var mpPerPixel = Configuration.MpPerPixelLength;
-            if (ImGui.InputFloat("MP per pixel for bar length", ref mpPerPixel, 0.1f, 0.5f, "%f"))
-            {
-                Configuration.MpPerPixelLength = mpPerPixel;
-                if (Configuration.MpPerPixelLength < 0.0001f)
-                    Configuration.MpPerPixelLength = 0.0001f;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines how long the MP bar is.\nFor example: If set to 20, every 20 MP would increase the width by 1 pixel.\n\nDefault: {Defaults.MpPerPixelLength}");
-                ImGui.End();
-            }
-
-            var maximumMpLength = Configuration.MaximumMpLength;
-            if (ImGui.InputInt("MP for maximum length", ref maximumMpLength, 1, 25))
-            {
-                Configuration.MaximumMpLength = maximumMpLength;
-                if (Configuration.MaximumMpLength < 1)
-                    Configuration.MaximumMpLength = 1;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines the limit of MaxMP on how long the bar can get.\nSetting to 10000 would prevent the bar from getting longer after 10000 MaxMP.\n\nDefault: {Defaults.MaximumMpLength}");
-                ImGui.End();
-            }
+            if (ImGui.InputFloat("MP per pixel", ref mpPerPixel, 0.1f, 0.5f, "%.2f")) Configuration.MpPerPixelLength = Math.Max(0.0001f, mpPerPixel);
 
             var minimumMpLength = Configuration.MinimumMpLength;
-            if (ImGui.InputInt("MP for minimum length", ref minimumMpLength, 1, 25))
-            {
-                Configuration.MinimumMpLength = minimumMpLength;
-                if (Configuration.MinimumMpLength < 1)
-                    Configuration.MinimumMpLength = 1;
-            }
+            if (ImGui.InputInt("Min MP for scaling", ref minimumMpLength, 1, 25)) Configuration.MinimumMpLength = Math.Max(1, minimumMpLength);
 
             if (Configuration.ResourceLengthByLevel)
             {
                 var mpPerLevel = Configuration.MpPerLevel;
-                if (ImGui.InputInt("Simulated MP added per Level", ref mpPerLevel, 10, 50))
-                {
-                    Configuration.MpPerLevel = mpPerLevel;
-                    if (Configuration.MpPerLevel < 1)
-                        Configuration.MpPerLevel = 1;
-                }
+                if (ImGui.InputInt("Simulated MP per Level", ref mpPerLevel, 10, 50)) Configuration.MpPerLevel = Math.Max(1, mpPerLevel);
             }
-
-            if (ImGui.IsItemHovered())
+            else
             {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines the limit of MaxMP on how small the bar can get.\nSetting to 100 would prevent the bar from getting smaller lower than 100 MaxMP.\n\nDefault: {Defaults.MinimumMpLength}");
-                ImGui.End();
+                var maximumMpLength = Configuration.MaximumMpLength;
+                if (ImGui.InputInt("Max MP for scaling", ref maximumMpLength, 1, 25)) Configuration.MaximumMpLength = Math.Max(1, maximumMpLength);
             }
 
             var truncate = Configuration.TruncateMp;
-            if (ImGui.Checkbox("Truncate MP Value", ref truncate))
-            {
-                Configuration.TruncateMp = truncate;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("TT1", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text("Truncate MP from 10000 to 100.");
-                ImGui.End();
-            }
+            if (ImGui.Checkbox("Truncate MP Value (e.g. 10000 -> 100)", ref truncate)) Configuration.TruncateMp = truncate;
 
-            ImGui.Separator();
-            ImGui.NewLine();
-            ImGui.Text("GP");
-            ImGui.Separator();
-
+            ImGui.Spacing();
+            ImGui.TextColored(new Vector4(0.5f, 0.8f, 1f, 1f), "GP Setup");
             var gpPerPixel = Configuration.GpPerPixelLength;
-            if (ImGui.InputFloat("GP per pixel for bar length", ref gpPerPixel, 0.1f, 0.5f, "%f"))
-            {
-                Configuration.GpPerPixelLength = gpPerPixel;
-                if (Configuration.GpPerPixelLength < 0.0001f)
-                    Configuration.GpPerPixelLength = 0.0001f;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines how long the GP bar is.\nFor example: If set to 20, every 20 GP would increase the width by 1 pixel.\n\nDefault: {Defaults.GpPerPixelLength}");
-                ImGui.End();
-            }
-
-            var maximumGpLength = Configuration.MaximumGpLength;
-            if (ImGui.InputInt("GP for maximum length", ref maximumGpLength, 1, 25))
-            {
-                Configuration.MaximumGpLength = maximumGpLength;
-                if (Configuration.MaximumGpLength < 1)
-                    Configuration.MaximumGpLength = 1;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines the limit of MaxGP on how long the bar can get.\nSetting to 500 would prevent the bar from getting longer after 500 MaxGP.\n\nDefault: {Defaults.MaximumGpLength}");
-                ImGui.End();
-            }
+            if (ImGui.InputFloat("GP per pixel", ref gpPerPixel, 0.1f, 0.5f, "%.2f")) Configuration.GpPerPixelLength = Math.Max(0.0001f, gpPerPixel);
 
             var minimumGpLength = Configuration.MinimumGpLength;
-            if (ImGui.InputInt("GP for minimum length", ref minimumGpLength, 1, 25))
-            {
-                Configuration.MinimumGpLength = minimumGpLength;
-                if (Configuration.MinimumGpLength < 1)
-                    Configuration.MinimumGpLength = 1;
-            }
+            if (ImGui.InputInt("Min GP for scaling", ref minimumGpLength, 1, 25)) Configuration.MinimumGpLength = Math.Max(1, minimumGpLength);
 
-            // Below Configuration.MinimumGpLength block:
             if (Configuration.ResourceLengthByLevel)
             {
                 var gpPerLevel = Configuration.GpPerLevel;
-                if (ImGui.InputInt("Simulated GP added per Level", ref gpPerLevel, 1, 10))
-                {
-                    Configuration.GpPerLevel = gpPerLevel;
-                    if (Configuration.GpPerLevel < 1)
-                        Configuration.GpPerLevel = 1;
-                }
+                if (ImGui.InputInt("Simulated GP per Level", ref gpPerLevel, 1, 10)) Configuration.GpPerLevel = Math.Max(1, gpPerLevel);
             }
-
-            if (ImGui.IsItemHovered())
+            else
             {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines the limit of MaxGP on how small the bar can get.\nSetting to 100 would prevent the bar from getting smaller lower than 100 MaxGP.\n\nDefault: {Defaults.MinimumGpLength}");
-                ImGui.End();
+                var maximumGpLength = Configuration.MaximumGpLength;
+                if (ImGui.InputInt("Max GP for scaling", ref maximumGpLength, 1, 25)) Configuration.MaximumGpLength = Math.Max(1, maximumGpLength);
             }
 
-            ImGui.Separator();
-            ImGui.NewLine();
-            ImGui.Text("CP");
-            ImGui.Separator();
-
+            ImGui.Spacing();
+            ImGui.TextColored(new Vector4(0.5f, 0.8f, 1f, 1f), "CP Setup");
             var cpPerPixel = Configuration.CpPerPixelLength;
-            if (ImGui.InputFloat("CP per pixel for bar length", ref cpPerPixel, 0.1f, 0.5f, "%f"))
-            {
-                Configuration.CpPerPixelLength = cpPerPixel;
-                if (Configuration.CpPerPixelLength < 0.0001f)
-                    Configuration.CpPerPixelLength = 0.0001f;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines how long the CP bar is.\nFor example: If set to 20, every 20 CP would increase the width by 1 pixel.\n\nDefault: {Defaults.CpPerPixelLength}");
-                ImGui.End();
-            }
-
-            var maximumCpLength = Configuration.MaximumCpLength;
-            if (ImGui.InputInt("CP for maximum length", ref maximumCpLength, 1, 25))
-            {
-                Configuration.MaximumCpLength = maximumCpLength;
-                if (Configuration.MaximumCpLength < 1)
-                    Configuration.MaximumCpLength = 1;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines the limit of MaxCP on how long the bar can get.\nSetting to 400 would prevent the bar from getting longer after 400 MaxCP.\n\nDefault: {Defaults.MaximumCpLength}");
-                ImGui.End();
-            }
+            if (ImGui.InputFloat("CP per pixel", ref cpPerPixel, 0.1f, 0.5f, "%.2f")) Configuration.CpPerPixelLength = Math.Max(0.0001f, cpPerPixel);
 
             var minimumCpLength = Configuration.MinimumCpLength;
-            if (ImGui.InputInt("CP for minimum length", ref minimumCpLength, 1, 25))
-            {
-                Configuration.MinimumCpLength = minimumCpLength;
-                if (Configuration.MinimumCpLength < 1)
-                    Configuration.MinimumCpLength = 1;
-            }
+            if (ImGui.InputInt("Min CP for scaling", ref minimumCpLength, 1, 25)) Configuration.MinimumCpLength = Math.Max(1, minimumCpLength);
 
-            // Below Configuration.MinimumCpLength block:
             if (Configuration.ResourceLengthByLevel)
             {
                 var cpPerLevel = Configuration.CpPerLevel;
-                if (ImGui.InputInt("Simulated CP added per Level", ref cpPerLevel, 1, 10))
-                {
-                    Configuration.CpPerLevel = cpPerLevel;
-                    if (Configuration.CpPerLevel < 1)
-                        Configuration.CpPerLevel = 1;
-                }
+                if (ImGui.InputInt("Simulated CP per Level", ref cpPerLevel, 1, 10)) Configuration.CpPerLevel = Math.Max(1, cpPerLevel);
             }
-
-            if (ImGui.IsItemHovered())
+            else
             {
-                Vector2 m = ImGui.GetIO().MousePos;
-                ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                ImGui.Text($"Defines the limit of MaxCP on how small the bar can get.\nSetting to 100 would prevent the bar from getting smaller lower than 100 MaxCP.\n\nDefault: {Defaults.MinimumCpLength}");
-                ImGui.End();
+                var maximumCpLength = Configuration.MaximumCpLength;
+                if (ImGui.InputInt("Max CP for scaling", ref maximumCpLength, 1, 25)) Configuration.MaximumCpLength = Math.Max(1, maximumCpLength);
             }
 
             ImGui.EndTabItem();
@@ -799,30 +353,19 @@ namespace KingdomHeartsPlugin
             if (!ImGui.BeginTabItem("Limit Gauge")) return;
 
             var enabled = Configuration.LimitBarEnabled;
-            if (ImGui.Checkbox("Enabled", ref enabled))
-            {
-                Configuration.LimitBarEnabled = enabled;
-            }
+            if (ImGui.Checkbox("Enabled", ref enabled)) Configuration.LimitBarEnabled = enabled;
+            
             var limitAlwaysShow = Configuration.LimitGaugeAlwaysShow;
-            if (ImGui.Checkbox("Always Show", ref limitAlwaysShow))
-            {
-                Configuration.LimitGaugeAlwaysShow = limitAlwaysShow;
-            }
+            if (ImGui.Checkbox("Always Show", ref limitAlwaysShow)) Configuration.LimitGaugeAlwaysShow = limitAlwaysShow;
+            
             var limitDiadem = Configuration.LimitGaugeDiadem;
-            if (ImGui.Checkbox("Show for Diadem Compressed Aether", ref limitDiadem))
-            {
-                Configuration.LimitGaugeDiadem = limitDiadem;
-            }
+            if (ImGui.Checkbox("Show for Diadem Compressed Aether", ref limitDiadem)) Configuration.LimitGaugeDiadem = limitDiadem;
+            
             var limitPosX = Configuration.LimitGaugePositionX;
-            if (ImGui.InputFloat("X Position", ref limitPosX, 1, 25))
-            {
-                Configuration.LimitGaugePositionX = limitPosX;
-            }
+            if (ImGui.InputFloat("X Position", ref limitPosX, 1, 25)) Configuration.LimitGaugePositionX = limitPosX;
+            
             var limitPosY = Configuration.LimitGaugePositionY;
-            if (ImGui.InputFloat("Y Position", ref limitPosY, 1, 25))
-            {
-                Configuration.LimitGaugePositionY = limitPosY;
-            }
+            if (ImGui.InputFloat("Y Position", ref limitPosY, 1, 25)) Configuration.LimitGaugePositionY = limitPosY;
 
             ImGui.EndTabItem();
         }
@@ -831,156 +374,72 @@ namespace KingdomHeartsPlugin
         {
             if (!ImGui.BeginTabItem("Class Info")) return;
 
-            ImGui.Text("Exp Info");
-            ImGui.Separator();
-
+            SectionHeader("Experience Bar");
             var expBarEnabled = Configuration.ExpBarEnabled;
-            if (ImGui.Checkbox("EXP Bar Enabled", ref expBarEnabled))
+            if (ImGui.Checkbox("EXP Bar Enabled", ref expBarEnabled)) Configuration.ExpBarEnabled = expBarEnabled;
+
+            var expTextEnabled = Configuration.ExpValueTextEnabled;
+            if (ImGui.Checkbox("Show EXP Value", ref expTextEnabled)) Configuration.ExpValueTextEnabled = expTextEnabled;
+
+            if (Configuration.ExpValueTextEnabled)
             {
-                Configuration.ExpBarEnabled = expBarEnabled;
-            }
-
-            if (ImGui.TreeNode("Exp Text"))
-            {
-                //ImGui.Indent(20);
-                ImGui.BeginGroup();
-
-                var expTextEnabled = Configuration.ExpValueTextEnabled;
-                if (ImGui.Checkbox("Enabled", ref expTextEnabled))
-                {
-                    Configuration.ExpValueTextEnabled = expTextEnabled;
-                }
-
+                ImGui.Indent();
                 var expTextPos = new Vector2(Configuration.ExpValueTextPositionX, Configuration.ExpValueTextPositionY);
-                if (ImGui.DragFloat2("Position (X, Y)", ref expTextPos))
+                if (ImGui.DragFloat2("Position (X, Y)##EXP", ref expTextPos))
                 {
                     Configuration.ExpValueTextPositionX = expTextPos.X;
                     Configuration.ExpValueTextPositionY = expTextPos.Y;
                 }
 
                 var expTextSize = Configuration.ExpValueTextSize;
-                if (ImGui.InputFloat("Size", ref expTextSize))
-                {
-                    Configuration.ExpValueTextSize = expTextSize;
-                }
+                if (ImGui.InputFloat("Size##EXP", ref expTextSize)) Configuration.ExpValueTextSize = expTextSize;
 
-                if (ImGui.BeginCombo("Alignment", Enum.GetName((TextAlignment)Configuration.ExpValueTextAlignment)))
-                {
-                    var alignments = Enum.GetNames(typeof(TextAlignment));
-                    for (int i = 0; i < alignments.Length; i++)
-                    {
-                        if (ImGui.Selectable(alignments[i]))
-                        {
-                            Configuration.ExpValueTextAlignment = i;
-                        }
-                    }
-                    ImGui.EndCombo();
-                }
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("TT1", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text("Please note that center and right alignments are not perfect and may not hold the same position.");
-                    ImGui.End();
-                }
-
-                if (ImGui.BeginCombo("Formatting", Configuration.ExpValueTextFormatStyle.GetDescription()))
-                {
-                    var styles = (NumberFormatStyle[])Enum.GetValues(typeof(NumberFormatStyle));
-                    for (int i = 0; i < styles.Length; i++)
-                    {
-                        if (ImGui.Selectable($"{styles[i].GetDescription()} ({StringFormatting.FormatDigits(12345, (NumberFormatStyle)i)}/{StringFormatting.FormatDigits(9999999, (NumberFormatStyle)i)})"))
-                        {
-                            Configuration.ExpValueTextFormatStyle = (NumberFormatStyle)i;
-                        }
-                    }
-                    ImGui.EndCombo();
-                }
-
-                ImGui.EndGroup();
-                ImGui.TreePop();
-                //ImGui.Indent(-20);
+                Configuration.ExpValueTextAlignment = (int)DrawEnumCombo("Alignment##EXP", (TextAlignment)Configuration.ExpValueTextAlignment);
+                Configuration.ExpValueTextFormatStyle = DrawEnumCombo("Formatting##EXP", Configuration.ExpValueTextFormatStyle, 
+                    val => $"{val.GetDescription()} ({StringFormatting.FormatDigits(12345, val)}/{StringFormatting.FormatDigits(9999999, val)})");
+                ImGui.Unindent();
             }
 
-            ImGui.Separator();
+            ImGui.Spacing();
+            SectionHeader("Level Text");
+            var levelTextEnabled = Configuration.LevelEnabled;
+            if (ImGui.Checkbox("Level Text Enabled", ref levelTextEnabled)) Configuration.LevelEnabled = levelTextEnabled;
 
-
-            if (ImGui.TreeNode("Level Text"))
+            if (Configuration.LevelEnabled)
             {
-                //ImGui.Indent(20);
-                ImGui.BeginGroup();
-
-                var levelTextEnabled = Configuration.LevelEnabled;
-                if (ImGui.Checkbox("Enabled", ref levelTextEnabled))
-                {
-                    Configuration.LevelEnabled = levelTextEnabled;
-                }
-
+                ImGui.Indent();
                 var levelTextPos = new Vector2(Configuration.LevelTextX, Configuration.LevelTextY);
-                if (ImGui.DragFloat2("Position (X, Y)", ref levelTextPos))
+                if (ImGui.DragFloat2("Position (X, Y)##Level", ref levelTextPos))
                 {
                     Configuration.LevelTextX = levelTextPos.X;
                     Configuration.LevelTextY = levelTextPos.Y;
                 }
                 
                 var levelTextSize = Configuration.LevelTextSize;
-                if (ImGui.InputFloat("Size", ref levelTextSize))
-                {
-                    Configuration.LevelTextSize = levelTextSize;
-                }
+                if (ImGui.InputFloat("Size##Level", ref levelTextSize)) Configuration.LevelTextSize = levelTextSize;
 
-                if (ImGui.BeginCombo("Alignment", Enum.GetName(Configuration.LevelTextAlignment)))
-                {
-                    var alignments = Enum.GetNames(typeof(TextAlignment));
-                    for (int i = 0; i < alignments.Length; i++)
-                    {
-                        if (ImGui.Selectable(alignments[i]))
-                        {
-                            Configuration.LevelTextAlignment = (TextAlignment)i;
-                        }
-                    }
-                    ImGui.EndCombo();
-                }
-                if (ImGui.IsItemHovered())
-                {
-                    Vector2 m = ImGui.GetIO().MousePos;
-                    ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-                    ImGui.Begin("TT1", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-                    ImGui.Text("Please note that center and right alignments are not perfect and may not hold the same position.");
-                    ImGui.End();
-                }
-
-                ImGui.EndGroup();
-                ImGui.TreePop();
-                //ImGui.Indent(-20);
+                Configuration.LevelTextAlignment = DrawEnumCombo("Alignment##Level", Configuration.LevelTextAlignment);
+                ImGui.Unindent();
             }
 
-            ImGui.Text("Class Icon");
-            ImGui.Separator();
-
+            ImGui.Spacing();
+            SectionHeader("Class Icon");
             var classIconEnabled = Configuration.ClassIconEnabled;
-            if (ImGui.Checkbox("Class Icon Enabled", ref classIconEnabled))
-            {
-                Configuration.ClassIconEnabled = classIconEnabled;
-            }
+            if (ImGui.Checkbox("Class Icon Enabled", ref classIconEnabled)) Configuration.ClassIconEnabled = classIconEnabled;
 
-
-            var classIconPos = new Vector2(Configuration.ClassIconX, Configuration.ClassIconY);
-            if (ImGui.DragFloat2("Position (X, Y)", ref classIconPos))
+            if (Configuration.ClassIconEnabled)
             {
-                Configuration.ClassIconX = classIconPos.X;
-                Configuration.ClassIconY = classIconPos.Y;
-            }
+                ImGui.Indent();
+                var classIconPos = new Vector2(Configuration.ClassIconX, Configuration.ClassIconY);
+                if (ImGui.DragFloat2("Position (X, Y)##Icon", ref classIconPos))
+                {
+                    Configuration.ClassIconX = classIconPos.X;
+                    Configuration.ClassIconY = classIconPos.Y;
+                }
 
-            var scale = Configuration.ClassIconScale;
-            if (ImGui.InputFloat("Scale", ref scale, 0.025f, 0.1f))
-            {
-                Configuration.ClassIconScale = scale;
-                if (Configuration.ClassIconScale < 0.1f)
-                    Configuration.ClassIconScale = 0.1f;
-                if (Configuration.ClassIconScale > 3)
-                    Configuration.ClassIconScale = 3;
+                var scale = Configuration.ClassIconScale;
+                if (ImGui.SliderFloat("Scale##Icon", ref scale, 0.1f, 3f)) Configuration.ClassIconScale = scale;
+                ImGui.Unindent();
             }
 
             ImGui.EndTabItem();
@@ -992,6 +451,7 @@ namespace KingdomHeartsPlugin
 
             if (!ImGui.BeginTabItem("Portrait")) return;
 
+            SectionHeader("Transform & State");
             var portraitPos = new Vector2(Configuration.PortraitX, Configuration.PortraitY);
             if (ImGui.DragFloat2("Position (X, Y)", ref portraitPos))
             {
@@ -1000,125 +460,40 @@ namespace KingdomHeartsPlugin
             }
 
             var portraitScale = Configuration.PortraitScale;
-            if (ImGui.DragFloat("Scale##Portrait", ref portraitScale, 0.001f, 0, 10f))
-            {
-                Configuration.PortraitScale = portraitScale;
-            }
+            if (ImGui.DragFloat("Scale##Portrait", ref portraitScale, 0.01f, 0.1f, 10f)) Configuration.PortraitScale = portraitScale;
 
             var redWhenDamaged = Configuration.PortraitRedWhenDamaged;
-            if (ImGui.Checkbox("Red Color When Damaged##Portrait", ref redWhenDamaged))
-            {
-                Configuration.PortraitRedWhenDamaged = redWhenDamaged;
-            }
+            if (ImGui.Checkbox("Red Color Filter When Damaged", ref redWhenDamaged)) Configuration.PortraitRedWhenDamaged = redWhenDamaged;
 
             var redWhenDanger = Configuration.PortraitRedWhenDanger;
-            if (ImGui.Checkbox("Red Color When Danger Status##Portrait", ref redWhenDanger))
+            if (ImGui.Checkbox("Red Color Filter on Danger Status", ref redWhenDanger)) Configuration.PortraitRedWhenDanger = redWhenDanger;
+
+            ImGui.Spacing();
+            SectionHeader("Image Paths");
+
+            DrawPortraitPathInput("Normal", Configuration.PortraitNormalImage, path =>
             {
-                Configuration.PortraitRedWhenDanger = redWhenDanger;
-            }
+                Configuration.PortraitNormalImage = path;
+                Portrait.SetPortraitNormal(path);
+            }, supportedImages);
 
-
-            ImGui.NewLine();
-            ImGui.Text("Portrait image paths");
-            ImGui.Separator();
-            ImGui.NewLine();
-            
-            var normalPortraitPath = Configuration.PortraitNormalImage;
-
-            ImGui.Text("Normal Portrait");
-            ImGui.SameLine();
-            ImGui.TextColored(new Vector4(1,0,0,1),FindImageMessage(normalPortraitPath));
-
-            ImGui.InputText("##Normal", ref normalPortraitPath, 512, ImGuiInputTextFlags.ReadOnly);
-
-            ImGui.SameLine();
-            if (ImGui.Button("Browse...##NormalPortrait"))
+            DrawPortraitPathInput("Hurt", Configuration.PortraitHurtImage, path =>
             {
-                var startDir = Path.GetDirectoryName(Configuration.PortraitNormalImage);
+                Configuration.PortraitHurtImage = path;
+                Portrait.SetPortraitHurt(path);
+            }, supportedImages);
 
-                void UpdatePath(bool success, List<string> paths)
-                {
-                    if (success && paths.Count > 0)
-                    {
-                        Configuration.PortraitNormalImage = paths[0];
-                        Portrait.SetPortraitNormal(Configuration.PortraitNormalImage);
-                    }
-                }
-
-                _dialogManager.OpenFileDialog("Choose an image file for Normal Portrait", supportedImages, UpdatePath, 1, startDir);
-            }
-
-            var hurtPortraitPath = Configuration.PortraitHurtImage;
-            ImGui.Text("Hurt Portrait");
-            ImGui.SameLine();
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), FindImageMessage(hurtPortraitPath));
-            
-            ImGui.InputText("##HurtPortrait", ref hurtPortraitPath, 512, ImGuiInputTextFlags.ReadOnly);
-
-            ImGui.SameLine();
-            if (ImGui.Button("Browse...##HurtPortrait"))
+            DrawPortraitPathInput("Danger", Configuration.PortraitDangerImage, path =>
             {
-                var startDir = Path.GetDirectoryName(Configuration.PortraitHurtImage);
+                Configuration.PortraitDangerImage = path;
+                Portrait.SetPortraitDanger(path);
+            }, supportedImages);
 
-                void UpdatePath(bool success, List<string> paths)
-                {
-                    if (success && paths.Count > 0)
-                    {
-                        Configuration.PortraitHurtImage = paths[0];
-                        Portrait.SetPortraitHurt(Configuration.PortraitHurtImage);
-                    }
-                }
-
-                _dialogManager.OpenFileDialog("Choose an image file for Hurt Portrait", supportedImages, UpdatePath, 1, startDir);
-            }
-
-            var dangerPortraitPath = Configuration.PortraitDangerImage;
-            ImGui.Text("Danger Portrait");
-            ImGui.SameLine();
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), FindImageMessage(dangerPortraitPath));
-
-            ImGui.InputText("##Danger", ref dangerPortraitPath, 512, ImGuiInputTextFlags.ReadOnly);
-
-            ImGui.SameLine();
-            if (ImGui.Button("Browse...##DangerPortrait"))
+            DrawPortraitPathInput("Combat", Configuration.PortraitCombatImage, path =>
             {
-                var startDir = Path.GetDirectoryName(Configuration.PortraitDangerImage);
-
-                void UpdatePath(bool success, List<string> paths)
-                {
-                    if (success && paths.Count > 0)
-                    {
-                        Configuration.PortraitDangerImage = paths[0];
-                        Portrait.SetPortraitDanger(Configuration.PortraitDangerImage);
-                    }
-                }
-
-                _dialogManager.OpenFileDialog("Choose an image file for Danger Portrait", supportedImages, UpdatePath, 1, startDir);
-            }
-
-            var combatPortraitPath = Configuration.PortraitCombatImage;
-            ImGui.Text("Combat Portrait");
-            ImGui.SameLine();
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), FindImageMessage(combatPortraitPath));
-
-            ImGui.InputText("##Combat", ref combatPortraitPath, 512, ImGuiInputTextFlags.ReadOnly);
-
-            ImGui.SameLine();
-            if (ImGui.Button("Browse...##CombatPortrait"))
-            {
-                var startDir = Path.GetDirectoryName(Configuration.PortraitCombatImage);
-
-                void UpdatePath(bool success, List<string> paths)
-                {
-                    if (success && paths.Count > 0)
-                    {
-                        Configuration.PortraitCombatImage = paths[0];
-                        Portrait.SetPortraitCombat(Configuration.PortraitCombatImage);
-                    }
-                }
-
-                _dialogManager.OpenFileDialog("Choose an image file for Combat Portrait", supportedImages, UpdatePath, 1, startDir);
-            }
+                Configuration.PortraitCombatImage = path;
+                Portrait.SetPortraitCombat(path);
+            }, supportedImages);
 
             ImGui.EndTabItem();
         }
@@ -1126,47 +501,35 @@ namespace KingdomHeartsPlugin
         private void SoundSettings()
         {
             if (!ImGui.BeginTabItem("Sound")) return;
-
-            ImGui.NewLine();
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), "This feature has been made in to a new plugin called Audible Character Status.");
-            ImGui.NewLine();
+            ImGui.Spacing();
+            ImGui.TextColored(new Vector4(1, 0.5f, 0, 1), "Notice:");
+            ImGui.TextWrapped("This feature has been migrated to a dedicated plugin called 'Audible Character Status'.");
             ImGui.EndTabItem();
-        }
-
-        private void Tooltip(string message)
-        {
-            Vector2 m = ImGui.GetIO().MousePos;
-            ImGui.SetNextWindowPos(new Vector2(m.X + 20, m.Y + 20));
-            ImGui.Begin("KHTT", ImGuiWindowFlags.Tooltip | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-            ImGui.Text(message);
-            ImGui.End();
         }
 
         public void DrawSettingsWindow()
         {
-            if (!SettingsVisible)
-            {
-                return;
-            }
+            if (!SettingsVisible) return;
 
-            ImGui.SetNextWindowSize(new Vector2(600, 500), ImGuiCond.FirstUseEver);
-            if (ImGui.Begin("Kingdom Hearts Bars: Settings", ref settingsVisible,
-               ImGuiWindowFlags.NoCollapse))
+            ImGui.SetNextWindowSize(new Vector2(650, 600), ImGuiCond.FirstUseEver);
+            if (ImGui.Begin("Kingdom Hearts Bars Configuration", ref settingsVisible, ImGuiWindowFlags.NoCollapse))
             {
-                ImGui.BeginTabBar("KhTabBar");
-                
-                GeneralSettings();
-                HealthSettings();
-                ResourceSettings();
-                LimitSettings();
-                ClassSettings();
-                PortraitSettings();
-                SoundSettings();
+                if (ImGui.BeginTabBar("KhTabBar"))
+                {
+                    GeneralSettings();
+                    HealthSettings();
+                    ResourceSettings();
+                    LimitSettings();
+                    ClassSettings();
+                    PortraitSettings();
+                    SoundSettings();
+                    ImGui.EndTabBar();
+                }
+
                 _dialogManager.Draw();
-
-                ImGui.EndTabBar();
                 ImGui.Separator();
-                if (ImGui.Button("Save"))
+                
+                if (ImGui.Button("Save Configuration", new Vector2(150, 0)))
                 {
                     Configuration.Save();
                 }
@@ -1174,33 +537,89 @@ namespace KingdomHeartsPlugin
             ImGui.End();
         }
 
-        /// <summary>
-        /// Returns a message depending on if an image is found or not, and if it is not a supported format.
-        /// Supported formats are png, jpg, jpeg, and bmp.
-        /// </summary>
-        /// <param name="path">Path to image</param>
-        /// <returns>string</returns>
+        // --- Helper Methods ---
+
+        private void SectionHeader(string title)
+        {
+            ImGui.PushFont(Dalamud.Interface.UiBuilder.IconFont);
+            // Bullet icon for slight emphasis if desired, or skip it.
+            ImGui.PopFont();
+            ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1f), title);
+            ImGui.Separator();
+            ImGui.Spacing();
+        }
+
+        private void HoverTooltip(string message)
+        {
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(message);
+            }
+        }
+
+        private T DrawEnumCombo<T>(string label, T currentValue, Func<T, string>? formatDisplay = null) where T : Enum
+        {
+            T result = currentValue;
+            string displayValue = formatDisplay != null ? formatDisplay(result) : result.ToString();
+            
+            if (ImGui.BeginCombo(label, displayValue))
+            {
+                foreach (T val in Enum.GetValues(typeof(T)))
+                {
+                    bool isSelected = val.Equals(currentValue);
+                    string optionText = formatDisplay != null ? formatDisplay(val) : val.ToString();
+                    
+                    if (ImGui.Selectable(optionText, isSelected))
+                    {
+                        result = val;
+                    }
+                    if (isSelected) ImGui.SetItemDefaultFocus();
+                }
+                ImGui.EndCombo();
+            }
+            return result;
+        }
+
+        private void DrawPortraitPathInput(string label, string currentPath, Action<string> updateAction, string supportedExtensions)
+        {
+            ImGui.Text($"{label} Portrait");
+            ImGui.SameLine();
+            ImGui.TextColored(new Vector4(1, 0, 0, 1), FindImageMessage(currentPath));
+
+            // Assign to a local variable to satisfy ImGui.InputText's ref requirement safely
+            string tempPath = currentPath ?? string.Empty;
+            ImGui.InputText($"##{label}Input", ref tempPath, 512, ImGuiInputTextFlags.ReadOnly);
+            ImGui.SameLine();
+
+            if (ImGui.Button($"Browse...##{label}Browse"))
+            {
+                var startDir = string.IsNullOrEmpty(currentPath) ? string.Empty : Path.GetDirectoryName(currentPath);
+                void UpdatePath(bool success, List<string> paths)
+                {
+                    if (success && paths.Count > 0)
+                    {
+                        updateAction(paths[0]);
+                    }
+                }
+                _dialogManager.OpenFileDialog($"Choose an image file for {label} Portrait", supportedExtensions, UpdatePath, 1, startDir);
+            }
+        }
+
         private string FindImageMessage(string path)
         {
             if (path.IsNullOrEmpty()) return "";
-
-            var fileFound = File.Exists(path);
-
-            if (!fileFound) return "File not found.";
+            if (!File.Exists(path)) return "File not found.";
 
             string[] supportedImages = { ".png", ".jpg", ".jpeg", ".bmp" };
-
-            var isImage = supportedImages.Any(ext => Path.GetExtension(path) == ext);
-
-            return isImage ? "" : "File is not an image. png, jpg, jpeg, bmp are supported.";
+            return supportedImages.Any(ext => Path.GetExtension(path).Equals(ext, StringComparison.OrdinalIgnoreCase)) 
+                ? "" 
+                : "Unsupported format (use png, jpg, jpeg, bmp).";
         }
+
         private FileDialogManager SetupDialogManager()
         {
             var fileManager = new FileDialogManager { AddedWindowFlags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking };
-
-            // Remove Videos and Music.
             fileManager.CustomSideBarItems.Add(("Videos", string.Empty, 0, -1));
-
             return fileManager;
         }
     }

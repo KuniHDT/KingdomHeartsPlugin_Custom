@@ -35,6 +35,8 @@ namespace KingdomHeartsPlugin.Configuration
         public const int HpPerLevel = 500;
         public const bool PvpLengthByLevel = false;
         public const int PvpHpPerLevel = 250;
+        public const float HpAnimationSpeed = 50f;
+        public const float HpAnimationDelay = 1.0f;
         #endregion
 
         #region Resource

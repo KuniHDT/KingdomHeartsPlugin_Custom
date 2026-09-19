@@ -41,6 +41,8 @@ namespace KingdomHeartsPlugin.Configuration
         public int HpPerLevel { get; set; } = Defaults.HpPerLevel;
         public bool PvpLengthByLevel { get; set; } = Defaults.PvpLengthByLevel;
         public int PvpHpPerLevel { get; set; } = Defaults.PvpHpPerLevel;
+        public float HpAnimationSpeed { get; set; } = Defaults.HpAnimationSpeed;
+        public float HpAnimationDelay { get; set; } = Defaults.HpAnimationDelay;
         #endregion
 
         #region Resource

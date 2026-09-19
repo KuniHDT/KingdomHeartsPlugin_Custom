@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Dalamud.Bindings.ImGui;
@@ -20,7 +20,6 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         private LimitGauge? _limitGauge;
         private ResourceBar? _resourceBar;
         private ClassBar? _expBar;
-
 
         public HealthFrame()
         {
@@ -46,16 +45,11 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             var player = KingdomHeartsPlugin.Ot.LocalPlayer;
             var parameterWidget = (AtkUnitBase*) KingdomHeartsPlugin.Gui.GetAddonByName("_ParameterWidget", 1).Address;
 
-            if (parameterWidget != null)
+            if (parameterWidget != null && !parameterWidget->IsVisible)
             {
-                // Do not do or draw anything if the parameter widget is not visible
-                if (!parameterWidget->IsVisible)
-                {
-                    return;
-                }
+                return;
             }
 
-            // Do not do or draw anything if player is null or game ui is hidden
             if (player is null || KingdomHeartsPlugin.Gui.GameUiHidden)
             {
                 return;
@@ -79,14 +73,10 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
             if (KingdomHeartsPlugin.Ui.Configuration.ShowHpVal && KingdomHeartsPlugin.Ui.Configuration.HpBarEnabled)
             {
-                // Draw HP Value
-                var basePosition = ImGui.GetItemRectMin() + new Vector2(KingdomHeartsPlugin.Ui.Configuration.HpValueTextPositionX, KingdomHeartsPlugin.Ui.Configuration.HpValueTextPositionY) * KingdomHeartsPlugin.Ui.Configuration.Scale;
-                /*float hp = KingdomHeartsPlugin.Ui.Configuration.TruncateHp && player.CurrentHp >= 10000
-                    ? player.CurrentHp / 1000f
-                    : player.CurrentHp;
+                var rawPosition = ImGui.GetItemRectMin() + new Vector2(KingdomHeartsPlugin.Ui.Configuration.HpValueTextPositionX, KingdomHeartsPlugin.Ui.Configuration.HpValueTextPositionY) * KingdomHeartsPlugin.Ui.Configuration.Scale;
 
-                string hpVal = KingdomHeartsPlugin.Ui.Configuration.TruncateHp && player.CurrentHp >= 10000
-                    ? player.CurrentHp >= 100000 ? $"{hp:0}K" : $"{hp:0.#}K" : $"{hp}";*/
+                // Snap to the pixel grid to eliminate ImGui sub-pixel blur
+                var basePosition = new Vector2((float)Math.Round(rawPosition.X), (float)Math.Round(rawPosition.Y));
 
                 ImGuiAdditions.TextShadowedDrawList(drawList,
                     KingdomHeartsPlugin.Ui.Configuration.HpValueTextSize,
@@ -96,107 +86,145 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                     new Vector4(0 / 255f, 0 / 255f, 0 / 255f, 0.25f), 3, (TextAlignment)KingdomHeartsPlugin.Ui.Configuration.HpValueTextAlignment);
             }
         }
-        
+
         private void UpdateHealth(IPlayerCharacter player)
         {
-            if (LastHp > player.CurrentHp && LastHp <= player.MaxHp)
-                DamagedHealth(LastHp);
-            if (LastHp < player.CurrentHp)
-                RestoredHealth(LastHp);
+            // Initialization catch to prevent massive drops when loading in
+            if (LastHp == 0 && player.CurrentHp > 0)
+            {
+                LastHp = player.CurrentHp;
+                SmoothCurrentHp = player.CurrentHp;
+                HpBeforeDamaged = player.CurrentHp;
+                HpTemp = player.CurrentHp;
+                return; 
+            }
+
+            if (player.CurrentHp != LastHp)
+            {
+                // Reset shared delay timer when a change happens
+                _hpAnimationTimer = KingdomHeartsPlugin.Ui.Configuration.HpAnimationDelay;
+
+                if (player.CurrentHp < LastHp)
+                {
+                    uint damageAmount = LastHp - player.CurrentHp;
+                    DamagedHealth(damageAmount, player.MaxHp);
+
+                    // Ensure damaged visual continues from the highest recent point
+                    HpBeforeDamaged = Math.Max(HpBeforeDamaged, LastHp);
+                }
+                else if (player.CurrentHp > LastHp)
+                {
+                    // Ensure restore visual starts/continues from the lowest recent point (No Skipping)
+                    HpTemp = Math.Min(HpTemp, LastHp);
+                }
+            }
 
             UpdateLowHealth(player.CurrentHp, player.MaxHp);
-            
-            UpdateDamagedHealth();
-
-            UpdateRestoredHealth(player.CurrentHp);
-
-            if (HpBeforeDamaged > player.MaxHp)
-                HpBeforeDamaged = player.MaxHp;
+            UpdateDamagedHealth(); // Handles wobble physics
+            UpdateHpAnimations(player.CurrentHp, player.MaxHp); // Handles smooth interpolation for current, damaged, and restored HP
 
             LastHp = player.CurrentHp;
         }
 
-        private void DamagedHealth(uint health)
+        private void DamagedHealth(uint damageAmount, uint maxHp)
         {
-            DamagedHealthAlpha = 1f;
-            HealthY = 0;
-            HealthVerticalSpeed = -3;
-            HpBeforeDamaged = health;
-        }
-
-        private void RestoredHealth(uint health)
-        {
-            if (HealthRestoreTime <= 0)
-            {
-                HpTemp = health;
-                HpBeforeRestored = health;
-            }
-
-            HealthRestoreTime = 1f;
-        }
-
-        private void UpdateRestoredHealth(uint currentHp)
-        {
-            if (HealthRestoreTime > 0)
-            {
-                HealthRestoreTime -= 1 * KingdomHeartsPlugin.UiSpeed;
-            }
-            else if (HpTemp < currentHp)
-            {
-                HpTemp += (currentHp - HpBeforeRestored) * KingdomHeartsPlugin.UiSpeed;
-                if (HpBeforeRestored > currentHp)
-                    HpBeforeRestored = currentHp;
-            }
-
-            if (HpTemp > currentHp)
-                HpTemp = currentHp;
+            float damagePercent = Math.Clamp((float)damageAmount / maxHp, 0.01f, 1f);
+            
+            // Wobble physics injection
+            float impactForce = -4f - (damagePercent * 25f);
+            HealthVerticalSpeed += impactForce;
         }
 
         private void UpdateDamagedHealth()
         {
-            switch (DamagedHealthAlpha)
-            {
-                case > 0.97f:
-                    DamagedHealthAlpha -= 0.09f * KingdomHeartsPlugin.UiSpeed;
-                    break;
-                case > 0.6f:
-                    DamagedHealthAlpha -= 0.8f * KingdomHeartsPlugin.UiSpeed;
-                    break;
-                case > 0.59f:
-                    DamagedHealthAlpha -= 0.005f * KingdomHeartsPlugin.UiSpeed;
-                    break;
-                case > 0.0f:
-                    DamagedHealthAlpha -= 1f * KingdomHeartsPlugin.UiSpeed;
-                    break;
-            }
-
-            // Vertical wobble
             _verticalAnimationTicks += 240 * KingdomHeartsPlugin.UiSpeed;
+
+            const float springStiffness = 0.12f;
+            const float springDamping = 0.90f;
 
             while (_verticalAnimationTicks > 1)
             {
-                float intensity = KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f;
                 _verticalAnimationTicks--;
+
+                float springForce = -springStiffness * HealthY;
+                HealthVerticalSpeed += springForce;
+                HealthVerticalSpeed *= springDamping;
                 HealthY += HealthVerticalSpeed;
 
-                if (HealthY > 3)
+                if (Math.Abs(HealthY) < 0.1f && Math.Abs(HealthVerticalSpeed) < 0.1f)
                 {
-                    HealthVerticalSpeed -= 0.2f;
+                    HealthY = 0;
+                    HealthVerticalSpeed = 0;
+                    _verticalAnimationTicks = 0; 
+                    break;
+                }
+            }
+        }
+
+        private void UpdateHpAnimations(uint currentHp, uint maxHp)
+        {
+            // Linearly interpolate current health when healing, but snap instantly when damaged
+            float smoothStep = maxHp * 0.35f * KingdomHeartsPlugin.UiSpeed; // Adjust 0.35f if you want the main bar to fill faster/slower
+            if (SmoothCurrentHp < currentHp)
+            {
+                SmoothCurrentHp = Math.Min(SmoothCurrentHp + smoothStep, currentHp);
+            }
+            else if (SmoothCurrentHp > currentHp)
+            {
+                SmoothCurrentHp = currentHp;
+            }
+
+            // Prevent visuals from overlapping incorrectly by keeping Temp values clamped to SmoothCurrentHp
+            // Snap instantly if damaged health exceeds max health bounds
+            if (HpBeforeDamaged > maxHp)
+            {
+                HpBeforeDamaged = currentHp;
+            }
+
+            if (HpTemp > SmoothCurrentHp)
+            {
+                HpTemp = SmoothCurrentHp;
+            }
+            if (HpBeforeDamaged < SmoothCurrentHp)
+            {
+                HpBeforeDamaged = SmoothCurrentHp;
+            }
+
+            // Timer countdown for delayed drain/fill animations
+            if (_hpAnimationTimer > 0)
+            {
+                _hpAnimationTimer -= KingdomHeartsPlugin.UiSpeed;
+            }
+            else
+            {
+                // Linear step based on max HP and user animation speed
+                float linearStep = maxHp * (KingdomHeartsPlugin.Ui.Configuration.HpAnimationSpeed * 0.015f) * KingdomHeartsPlugin.UiSpeed;
+
+                // Ensure a minimum movement speed
+                linearStep = Math.Max(linearStep, 1f);
+
+                if (HpBeforeDamaged > currentHp)
+                {
+                    HpBeforeDamaged -= linearStep;
+                    if (HpBeforeDamaged < currentHp) HpBeforeDamaged = currentHp;
                 }
 
-                else if (HealthY < -3)
+                if (HpTemp < currentHp)
                 {
-                    HealthVerticalSpeed += 0.2f;
+                    HpTemp += linearStep;
+                    if (HpTemp > currentHp) HpTemp = currentHp;
                 }
-                else if (HealthY is > -3 and < 3 && HealthVerticalSpeed is > -0.33f and < 0.33f)
-                {
-                    HealthVerticalSpeed = 0;
-                    HealthY = 0;
-                }
-                else if (HealthVerticalSpeed != 0)
-                {
-                    HealthVerticalSpeed *= 0.94f;
-                }
+            }
+
+            // Alpha handling: keep solid while waiting/draining, fade out when done
+            if (HpBeforeDamaged > currentHp)
+            {
+                DamagedHealthAlpha = 1f;
+            }
+            else if (DamagedHealthAlpha > 0)
+            {
+                DamagedHealthAlpha -= 1.5f * KingdomHeartsPlugin.UiSpeed;
+                if (DamagedHealthAlpha < 0) DamagedHealthAlpha = 0;
             }
         }
 
@@ -230,19 +258,16 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             var minimumMaxHpSize = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpMinimumHpForLength : KingdomHeartsPlugin.Ui.Configuration.MinimumHpForLength;
             var maximumMaxHpSize = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpMaximumHpForMaximumLength : KingdomHeartsPlugin.Ui.Configuration.MaximumHpForMaximumLength;
 
-            // New Feature: Level-based multiplier calculation
             var isLevelBased = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpLengthByLevel : KingdomHeartsPlugin.Ui.Configuration.LengthByLevel;
             var hpPerLevel = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpPerLevel : KingdomHeartsPlugin.Ui.Configuration.HpPerLevel;
 
             if (isLevelBased)
             {
-                // Scale off the configured minimum visual length, adding configured HP equivalent per level.
                 float simulatedHp = minimumMaxHpSize + (level * hpPerLevel);
                 HpLengthMultiplier = simulatedHp / (float)maxHp;
             }
             else
             {
-                // Standard min/max limits
                 HpLengthMultiplier = maxHp < minimumMaxHpSize
                     ? minimumMaxHpSize / (float)maxHp
                     : maxHp > maximumMaxHpSize
@@ -259,7 +284,6 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             }
             catch
             {
-                // Will sometimes error when hot reloading and I have no idea what is causing it. So exit.
                 return;
             }
 
@@ -276,14 +300,14 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
             if (KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery)
             {
-                if (HpTemp < hp)
-                    HealthRestoredRing?.Draw(drawList, hp / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                if (HpTemp < SmoothCurrentHp)
+                    HealthRestoredRing?.Draw(drawList, SmoothCurrentHp / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
 
                 HealthRing?.Draw(drawList, HpTemp / fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             }
             else
             {
-                HealthRing?.Draw(drawList, hp / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+                HealthRing?.Draw(drawList, SmoothCurrentHp / (float)fullRing * HpLengthMultiplier, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             }
 
             RingOutline?.Draw(drawList, maxHealthPercent, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
@@ -296,9 +320,10 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             var fullRing = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpForFullRing : KingdomHeartsPlugin.Ui.Configuration.HpForFullRing;
             var HpPerWidth = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpPerPixelLongBar : KingdomHeartsPlugin.Ui.Configuration.HpPerPixelLongBar;
             var basePosition = new Vector2(129, 212 + HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f);
-            var healthLength = ((KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : hp) * HpLengthMultiplier - fullRing) / HpPerWidth;
+            
+            var healthLength = ((KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp) * HpLengthMultiplier - fullRing) / HpPerWidth;
             var damagedHealthLength = (HpBeforeDamaged * HpLengthMultiplier - fullRing) / HpPerWidth;
-            var restoredHealthLength = ((KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? hp : 0) * HpLengthMultiplier - fullRing) / HpPerWidth;
+            var restoredHealthLength = ((KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery && HpTemp < SmoothCurrentHp ? SmoothCurrentHp : 0) * HpLengthMultiplier - fullRing) / HpPerWidth;
             var maxHealthLength = (maxHp * HpLengthMultiplier - fullRing) / HpPerWidth;
             
             if (maxHealthLength > 0)
@@ -358,8 +383,8 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
 
         // Temp Health Values
         private uint LastHp { get; set; }
-        private uint HpBeforeDamaged { get; set; }
-        private uint HpBeforeRestored { get; set; }
+        private float SmoothCurrentHp { get; set; }
+        private float HpBeforeDamaged { get; set; }
         private float HpTemp { get; set; }
         private float HpLengthMultiplier { get; set; }
 
@@ -369,7 +394,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         private int LowHealthAlphaDirection { get; set; }
 
         // Timers
-        private float HealthRestoreTime { get; set; }
+        private float _hpAnimationTimer { get; set; }
 
         // Positioning
         private float HealthY { get; set; }
