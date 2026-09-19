@@ -223,15 +223,66 @@ namespace KingdomHeartsPlugin
 
                 var tankMult = Configuration.TankHpMultiplier;
                 if (ImGui.InputFloat("Tank Multiplier", ref tankMult, 0.05f, 0.1f, "%.2f")) Configuration.TankHpMultiplier = Math.Max(0.01f, tankMult);
-
-                var meleeMult = Configuration.MeleeHpMultiplier;
-                if (ImGui.InputFloat("Melee DPS Multiplier", ref meleeMult, 0.05f, 0.1f, "%.2f")) Configuration.MeleeHpMultiplier = Math.Max(0.01f, meleeMult);
-
-                var rangedMult = Configuration.RangedHpMultiplier;
-                if (ImGui.InputFloat("Ranged DPS Multiplier", ref rangedMult, 0.05f, 0.1f, "%.2f")) Configuration.RangedHpMultiplier = Math.Max(0.01f, rangedMult);
+                var enableTankJobs = Configuration.EnableTankJobHpMultipliers;
+                if (ImGui.Checkbox("Enable Custom Tank Job Multipliers", ref enableTankJobs)) Configuration.EnableTankJobHpMultipliers = enableTankJobs;
+                if (Configuration.EnableTankJobHpMultipliers)
+                {
+                    ImGui.Indent();
+                    var pldMult = Configuration.PldHpMultiplier; if (ImGui.InputFloat("PLD Multiplier", ref pldMult, 0.05f, 0.1f, "%.2f")) Configuration.PldHpMultiplier = Math.Max(0.01f, pldMult);
+                    var warMult = Configuration.WarHpMultiplier; if (ImGui.InputFloat("WAR Multiplier", ref warMult, 0.05f, 0.1f, "%.2f")) Configuration.WarHpMultiplier = Math.Max(0.01f, warMult);
+                    var drkMult = Configuration.DrkHpMultiplier; if (ImGui.InputFloat("DRK Multiplier", ref drkMult, 0.05f, 0.1f, "%.2f")) Configuration.DrkHpMultiplier = Math.Max(0.01f, drkMult);
+                    var gnbMult = Configuration.GnbHpMultiplier; if (ImGui.InputFloat("GNB Multiplier", ref gnbMult, 0.05f, 0.1f, "%.2f")) Configuration.GnbHpMultiplier = Math.Max(0.01f, gnbMult);
+                    ImGui.Unindent();
+                }
 
                 var healerMult = Configuration.HealerHpMultiplier;
                 if (ImGui.InputFloat("Healer Multiplier", ref healerMult, 0.05f, 0.1f, "%.2f")) Configuration.HealerHpMultiplier = Math.Max(0.01f, healerMult);
+                var enableHealerJobs = Configuration.EnableHealerJobHpMultipliers;
+                if (ImGui.Checkbox("Enable Custom Healer Job Multipliers", ref enableHealerJobs)) Configuration.EnableHealerJobHpMultipliers = enableHealerJobs;
+                if (Configuration.EnableHealerJobHpMultipliers)
+                {
+                    ImGui.Indent();
+                    var whmMult = Configuration.WhmHpMultiplier; if (ImGui.InputFloat("WHM Multiplier", ref whmMult, 0.05f, 0.1f, "%.2f")) Configuration.WhmHpMultiplier = Math.Max(0.01f, whmMult);
+                    var schMult = Configuration.SchHpMultiplier; if (ImGui.InputFloat("SCH Multiplier", ref schMult, 0.05f, 0.1f, "%.2f")) Configuration.SchHpMultiplier = Math.Max(0.01f, schMult);
+                    var astMult = Configuration.AstHpMultiplier; if (ImGui.InputFloat("AST Multiplier", ref astMult, 0.05f, 0.1f, "%.2f")) Configuration.AstHpMultiplier = Math.Max(0.01f, astMult);
+                    var sgeMult = Configuration.SgeHpMultiplier; if (ImGui.InputFloat("SGE Multiplier", ref sgeMult, 0.05f, 0.1f, "%.2f")) Configuration.SgeHpMultiplier = Math.Max(0.01f, sgeMult);
+                    ImGui.Unindent();
+                }
+
+                var meleeMult = Configuration.MeleeHpMultiplier;
+                if (ImGui.InputFloat("Melee DPS Multiplier", ref meleeMult, 0.05f, 0.1f, "%.2f")) Configuration.MeleeHpMultiplier = Math.Max(0.01f, meleeMult);
+                var enableMeleeJobs = Configuration.EnableMeleeJobHpMultipliers;
+                if (ImGui.Checkbox("Enable Custom Melee Job Multipliers", ref enableMeleeJobs)) Configuration.EnableMeleeJobHpMultipliers = enableMeleeJobs;
+                if (Configuration.EnableMeleeJobHpMultipliers)
+                {
+                    ImGui.Indent();
+                    var mnkMult = Configuration.MnkHpMultiplier; if (ImGui.InputFloat("MNK Multiplier", ref mnkMult, 0.05f, 0.1f, "%.2f")) Configuration.MnkHpMultiplier = Math.Max(0.01f, mnkMult);
+                    var drgMult = Configuration.DrgHpMultiplier; if (ImGui.InputFloat("DRG Multiplier", ref drgMult, 0.05f, 0.1f, "%.2f")) Configuration.DrgHpMultiplier = Math.Max(0.01f, drgMult);
+                    var ninMult = Configuration.NinHpMultiplier; if (ImGui.InputFloat("NIN Multiplier", ref ninMult, 0.05f, 0.1f, "%.2f")) Configuration.NinHpMultiplier = Math.Max(0.01f, ninMult);
+                    var samMult = Configuration.SamHpMultiplier; if (ImGui.InputFloat("SAM Multiplier", ref samMult, 0.05f, 0.1f, "%.2f")) Configuration.SamHpMultiplier = Math.Max(0.01f, samMult);
+                    var rprMult = Configuration.RprHpMultiplier; if (ImGui.InputFloat("RPR Multiplier", ref rprMult, 0.05f, 0.1f, "%.2f")) Configuration.RprHpMultiplier = Math.Max(0.01f, rprMult);
+                    var vprMult = Configuration.VprHpMultiplier; if (ImGui.InputFloat("VPR Multiplier", ref vprMult, 0.05f, 0.1f, "%.2f")) Configuration.VprHpMultiplier = Math.Max(0.01f, vprMult);
+                    var bstMult = Configuration.BstHpMultiplier; if (ImGui.InputFloat("BST Multiplier", ref bstMult, 0.05f, 0.1f, "%.2f")) Configuration.BstHpMultiplier = Math.Max(0.01f, bstMult);
+                    ImGui.Unindent();
+                }
+
+                var rangedMult = Configuration.RangedHpMultiplier;
+                if (ImGui.InputFloat("Ranged DPS Multiplier", ref rangedMult, 0.05f, 0.1f, "%.2f")) Configuration.RangedHpMultiplier = Math.Max(0.01f, rangedMult);
+                var enableRangedJobs = Configuration.EnableRangedJobHpMultipliers;
+                if (ImGui.Checkbox("Enable Custom Ranged Job Multipliers", ref enableRangedJobs)) Configuration.EnableRangedJobHpMultipliers = enableRangedJobs;
+                if (Configuration.EnableRangedJobHpMultipliers)
+                {
+                    ImGui.Indent();
+                    var brdMult = Configuration.BrdHpMultiplier; if (ImGui.InputFloat("BRD Multiplier", ref brdMult, 0.05f, 0.1f, "%.2f")) Configuration.BrdHpMultiplier = Math.Max(0.01f, brdMult);
+                    var mchMult = Configuration.MchHpMultiplier; if (ImGui.InputFloat("MCH Multiplier", ref mchMult, 0.05f, 0.1f, "%.2f")) Configuration.MchHpMultiplier = Math.Max(0.01f, mchMult);
+                    var dncMult = Configuration.DncHpMultiplier; if (ImGui.InputFloat("DNC Multiplier", ref dncMult, 0.05f, 0.1f, "%.2f")) Configuration.DncHpMultiplier = Math.Max(0.01f, dncMult);
+                    var blmMult = Configuration.BlmHpMultiplier; if (ImGui.InputFloat("BLM Multiplier", ref blmMult, 0.05f, 0.1f, "%.2f")) Configuration.BlmHpMultiplier = Math.Max(0.01f, blmMult);
+                    var smnMult = Configuration.SmnHpMultiplier; if (ImGui.InputFloat("SMN Multiplier", ref smnMult, 0.05f, 0.1f, "%.2f")) Configuration.SmnHpMultiplier = Math.Max(0.01f, smnMult);
+                    var rdmMult = Configuration.RdmHpMultiplier; if (ImGui.InputFloat("RDM Multiplier", ref rdmMult, 0.05f, 0.1f, "%.2f")) Configuration.RdmHpMultiplier = Math.Max(0.01f, rdmMult);
+                    var pctMult = Configuration.PctHpMultiplier; if (ImGui.InputFloat("PCT Multiplier", ref pctMult, 0.05f, 0.1f, "%.2f")) Configuration.PctHpMultiplier = Math.Max(0.01f, pctMult);
+                    var bluMult = Configuration.BluHpMultiplier; if (ImGui.InputFloat("BLU Multiplier", ref bluMult, 0.05f, 0.1f, "%.2f")) Configuration.BluHpMultiplier = Math.Max(0.01f, bluMult);
+                    ImGui.Unindent();
+                }
 
                 var otherMult = Configuration.OtherHpMultiplier;
                 if (ImGui.InputFloat("Other / Crafter / Gatherer Multiplier", ref otherMult, 0.05f, 0.1f, "%.2f")) Configuration.OtherHpMultiplier = Math.Max(0.01f, otherMult);
@@ -407,15 +458,66 @@ namespace KingdomHeartsPlugin
 
                 var tankMult = Configuration.TankResourceMultiplier;
                 if (ImGui.InputFloat("Tank Multiplier##Resource", ref tankMult, 0.05f, 0.1f, "%.2f")) Configuration.TankResourceMultiplier = Math.Max(0.01f, tankMult);
-
-                var meleeMult = Configuration.MeleeResourceMultiplier;
-                if (ImGui.InputFloat("Melee DPS Multiplier##Resource", ref meleeMult, 0.05f, 0.1f, "%.2f")) Configuration.MeleeResourceMultiplier = Math.Max(0.01f, meleeMult);
-
-                var rangedMult = Configuration.RangedResourceMultiplier;
-                if (ImGui.InputFloat("Ranged DPS Multiplier##Resource", ref rangedMult, 0.05f, 0.1f, "%.2f")) Configuration.RangedResourceMultiplier = Math.Max(0.01f, rangedMult);
+                var enableTankJobs = Configuration.EnableTankJobResourceMultipliers;
+                if (ImGui.Checkbox("Enable Custom Tank Job Multipliers##Resource", ref enableTankJobs)) Configuration.EnableTankJobResourceMultipliers = enableTankJobs;
+                if (Configuration.EnableTankJobResourceMultipliers)
+                {
+                    ImGui.Indent();
+                    var pldMult = Configuration.PldResourceMultiplier; if (ImGui.InputFloat("PLD Multiplier##Resource", ref pldMult, 0.05f, 0.1f, "%.2f")) Configuration.PldResourceMultiplier = Math.Max(0.01f, pldMult);
+                    var warMult = Configuration.WarResourceMultiplier; if (ImGui.InputFloat("WAR Multiplier##Resource", ref warMult, 0.05f, 0.1f, "%.2f")) Configuration.WarResourceMultiplier = Math.Max(0.01f, warMult);
+                    var drkMult = Configuration.DrkResourceMultiplier; if (ImGui.InputFloat("DRK Multiplier##Resource", ref drkMult, 0.05f, 0.1f, "%.2f")) Configuration.DrkResourceMultiplier = Math.Max(0.01f, drkMult);
+                    var gnbMult = Configuration.GnbResourceMultiplier; if (ImGui.InputFloat("GNB Multiplier##Resource", ref gnbMult, 0.05f, 0.1f, "%.2f")) Configuration.GnbResourceMultiplier = Math.Max(0.01f, gnbMult);
+                    ImGui.Unindent();
+                }
 
                 var healerMult = Configuration.HealerResourceMultiplier;
                 if (ImGui.InputFloat("Healer Multiplier##Resource", ref healerMult, 0.05f, 0.1f, "%.2f")) Configuration.HealerResourceMultiplier = Math.Max(0.01f, healerMult);
+                var enableHealerJobs = Configuration.EnableHealerJobResourceMultipliers;
+                if (ImGui.Checkbox("Enable Custom Healer Job Multipliers##Resource", ref enableHealerJobs)) Configuration.EnableHealerJobResourceMultipliers = enableHealerJobs;
+                if (Configuration.EnableHealerJobResourceMultipliers)
+                {
+                    ImGui.Indent();
+                    var whmMult = Configuration.WhmResourceMultiplier; if (ImGui.InputFloat("WHM Multiplier##Resource", ref whmMult, 0.05f, 0.1f, "%.2f")) Configuration.WhmResourceMultiplier = Math.Max(0.01f, whmMult);
+                    var schMult = Configuration.SchResourceMultiplier; if (ImGui.InputFloat("SCH Multiplier##Resource", ref schMult, 0.05f, 0.1f, "%.2f")) Configuration.SchResourceMultiplier = Math.Max(0.01f, schMult);
+                    var astMult = Configuration.AstResourceMultiplier; if (ImGui.InputFloat("AST Multiplier##Resource", ref astMult, 0.05f, 0.1f, "%.2f")) Configuration.AstResourceMultiplier = Math.Max(0.01f, astMult);
+                    var sgeMult = Configuration.SgeResourceMultiplier; if (ImGui.InputFloat("SGE Multiplier##Resource", ref sgeMult, 0.05f, 0.1f, "%.2f")) Configuration.SgeResourceMultiplier = Math.Max(0.01f, sgeMult);
+                    ImGui.Unindent();
+                }
+
+                var meleeMult = Configuration.MeleeResourceMultiplier;
+                if (ImGui.InputFloat("Melee DPS Multiplier##Resource", ref meleeMult, 0.05f, 0.1f, "%.2f")) Configuration.MeleeResourceMultiplier = Math.Max(0.01f, meleeMult);
+                var enableMeleeJobs = Configuration.EnableMeleeJobResourceMultipliers;
+                if (ImGui.Checkbox("Enable Custom Melee Job Multipliers##Resource", ref enableMeleeJobs)) Configuration.EnableMeleeJobResourceMultipliers = enableMeleeJobs;
+                if (Configuration.EnableMeleeJobResourceMultipliers)
+                {
+                    ImGui.Indent();
+                    var mnkMult = Configuration.MnkResourceMultiplier; if (ImGui.InputFloat("MNK Multiplier##Resource", ref mnkMult, 0.05f, 0.1f, "%.2f")) Configuration.MnkResourceMultiplier = Math.Max(0.01f, mnkMult);
+                    var drgMult = Configuration.DrgResourceMultiplier; if (ImGui.InputFloat("DRG Multiplier##Resource", ref drgMult, 0.05f, 0.1f, "%.2f")) Configuration.DrgResourceMultiplier = Math.Max(0.01f, drgMult);
+                    var ninMult = Configuration.NinResourceMultiplier; if (ImGui.InputFloat("NIN Multiplier##Resource", ref ninMult, 0.05f, 0.1f, "%.2f")) Configuration.NinResourceMultiplier = Math.Max(0.01f, ninMult);
+                    var samMult = Configuration.SamResourceMultiplier; if (ImGui.InputFloat("SAM Multiplier##Resource", ref samMult, 0.05f, 0.1f, "%.2f")) Configuration.SamResourceMultiplier = Math.Max(0.01f, samMult);
+                    var rprMult = Configuration.RprResourceMultiplier; if (ImGui.InputFloat("RPR Multiplier##Resource", ref rprMult, 0.05f, 0.1f, "%.2f")) Configuration.RprResourceMultiplier = Math.Max(0.01f, rprMult);
+                    var vprMult = Configuration.VprResourceMultiplier; if (ImGui.InputFloat("VPR Multiplier##Resource", ref vprMult, 0.05f, 0.1f, "%.2f")) Configuration.VprResourceMultiplier = Math.Max(0.01f, vprMult);
+                    var bstMult = Configuration.BstResourceMultiplier; if (ImGui.InputFloat("BST Multiplier##Resource", ref bstMult, 0.05f, 0.1f, "%.2f")) Configuration.BstResourceMultiplier = Math.Max(0.01f, bstMult);
+                    ImGui.Unindent();
+                }
+
+                var rangedMult = Configuration.RangedResourceMultiplier;
+                if (ImGui.InputFloat("Ranged DPS Multiplier##Resource", ref rangedMult, 0.05f, 0.1f, "%.2f")) Configuration.RangedResourceMultiplier = Math.Max(0.01f, rangedMult);
+                var enableRangedJobs = Configuration.EnableRangedJobResourceMultipliers;
+                if (ImGui.Checkbox("Enable Custom Ranged Job Multipliers##Resource", ref enableRangedJobs)) Configuration.EnableRangedJobResourceMultipliers = enableRangedJobs;
+                if (Configuration.EnableRangedJobResourceMultipliers)
+                {
+                    ImGui.Indent();
+                    var brdMult = Configuration.BrdResourceMultiplier; if (ImGui.InputFloat("BRD Multiplier##Resource", ref brdMult, 0.05f, 0.1f, "%.2f")) Configuration.BrdResourceMultiplier = Math.Max(0.01f, brdMult);
+                    var mchMult = Configuration.MchResourceMultiplier; if (ImGui.InputFloat("MCH Multiplier##Resource", ref mchMult, 0.05f, 0.1f, "%.2f")) Configuration.MchResourceMultiplier = Math.Max(0.01f, mchMult);
+                    var dncMult = Configuration.DncResourceMultiplier; if (ImGui.InputFloat("DNC Multiplier##Resource", ref dncMult, 0.05f, 0.1f, "%.2f")) Configuration.DncResourceMultiplier = Math.Max(0.01f, dncMult);
+                    var blmMult = Configuration.BlmResourceMultiplier; if (ImGui.InputFloat("BLM Multiplier##Resource", ref blmMult, 0.05f, 0.1f, "%.2f")) Configuration.BlmResourceMultiplier = Math.Max(0.01f, blmMult);
+                    var smnMult = Configuration.SmnResourceMultiplier; if (ImGui.InputFloat("SMN Multiplier##Resource", ref smnMult, 0.05f, 0.1f, "%.2f")) Configuration.SmnResourceMultiplier = Math.Max(0.01f, smnMult);
+                    var rdmMult = Configuration.RdmResourceMultiplier; if (ImGui.InputFloat("RDM Multiplier##Resource", ref rdmMult, 0.05f, 0.1f, "%.2f")) Configuration.RdmResourceMultiplier = Math.Max(0.01f, rdmMult);
+                    var pctMult = Configuration.PctResourceMultiplier; if (ImGui.InputFloat("PCT Multiplier##Resource", ref pctMult, 0.05f, 0.1f, "%.2f")) Configuration.PctResourceMultiplier = Math.Max(0.01f, pctMult);
+                    var bluMult = Configuration.BluResourceMultiplier; if (ImGui.InputFloat("BLU Multiplier##Resource", ref bluMult, 0.05f, 0.1f, "%.2f")) Configuration.BluResourceMultiplier = Math.Max(0.01f, bluMult);
+                    ImGui.Unindent();
+                }
 
                 var otherMult = Configuration.OtherResourceMultiplier;
                 if (ImGui.InputFloat("Other / Crafter / Gatherer Multiplier##Resource", ref otherMult, 0.05f, 0.1f, "%.2f")) Configuration.OtherResourceMultiplier = Math.Max(0.01f, otherMult);

@@ -46,11 +46,43 @@ namespace KingdomHeartsPlugin.Configuration
         public int PvpHpPerLevel { get; set; } = Defaults.PvpHpPerLevel;
         public float HpAnimationSpeed { get; set; } = Defaults.HpAnimationSpeed;
         public float HpAnimationDelay { get; set; } = Defaults.HpAnimationDelay;
+        
         public bool EnableRoleHpMultipliers { get; set; } = Defaults.EnableRoleHpMultipliers;
         public float TankHpMultiplier { get; set; } = Defaults.TankHpMultiplier;
-        public float MeleeHpMultiplier { get; set; } = Defaults.MeleeHpMultiplier;
-        public float RangedHpMultiplier { get; set; } = Defaults.RangedHpMultiplier;
+        public bool EnableTankJobHpMultipliers { get; set; } = Defaults.EnableTankJobHpMultipliers;
+        public float PldHpMultiplier { get; set; } = Defaults.PldHpMultiplier;
+        public float WarHpMultiplier { get; set; } = Defaults.WarHpMultiplier;
+        public float DrkHpMultiplier { get; set; } = Defaults.DrkHpMultiplier;
+        public float GnbHpMultiplier { get; set; } = Defaults.GnbHpMultiplier;
+
         public float HealerHpMultiplier { get; set; } = Defaults.HealerHpMultiplier;
+        public bool EnableHealerJobHpMultipliers { get; set; } = Defaults.EnableHealerJobHpMultipliers;
+        public float WhmHpMultiplier { get; set; } = Defaults.WhmHpMultiplier;
+        public float SchHpMultiplier { get; set; } = Defaults.SchHpMultiplier;
+        public float AstHpMultiplier { get; set; } = Defaults.AstHpMultiplier;
+        public float SgeHpMultiplier { get; set; } = Defaults.SgeHpMultiplier;
+
+        public float MeleeHpMultiplier { get; set; } = Defaults.MeleeHpMultiplier;
+        public bool EnableMeleeJobHpMultipliers { get; set; } = Defaults.EnableMeleeJobHpMultipliers;
+        public float MnkHpMultiplier { get; set; } = Defaults.MnkHpMultiplier;
+        public float DrgHpMultiplier { get; set; } = Defaults.DrgHpMultiplier;
+        public float NinHpMultiplier { get; set; } = Defaults.NinHpMultiplier;
+        public float SamHpMultiplier { get; set; } = Defaults.SamHpMultiplier;
+        public float RprHpMultiplier { get; set; } = Defaults.RprHpMultiplier;
+        public float VprHpMultiplier { get; set; } = Defaults.VprHpMultiplier;
+        public float BstHpMultiplier { get; set; } = Defaults.BstHpMultiplier;
+
+        public float RangedHpMultiplier { get; set; } = Defaults.RangedHpMultiplier;
+        public bool EnableRangedJobHpMultipliers { get; set; } = Defaults.EnableRangedJobHpMultipliers;
+        public float BrdHpMultiplier { get; set; } = Defaults.BrdHpMultiplier;
+        public float MchHpMultiplier { get; set; } = Defaults.MchHpMultiplier;
+        public float DncHpMultiplier { get; set; } = Defaults.DncHpMultiplier;
+        public float BlmHpMultiplier { get; set; } = Defaults.BlmHpMultiplier;
+        public float SmnHpMultiplier { get; set; } = Defaults.SmnHpMultiplier;
+        public float RdmHpMultiplier { get; set; } = Defaults.RdmHpMultiplier;
+        public float PctHpMultiplier { get; set; } = Defaults.PctHpMultiplier;
+        public float BluHpMultiplier { get; set; } = Defaults.BluHpMultiplier;
+
         public float OtherHpMultiplier { get; set; } = Defaults.OtherHpMultiplier;
         #endregion
 
@@ -81,12 +113,45 @@ namespace KingdomHeartsPlugin.Configuration
         public bool ShowResourceRecovery { get; set; } = Defaults.ShowResourceRecovery;
         public float ResourceAnimationSpeed { get; set; } = Defaults.ResourceAnimationSpeed;
         public float ResourceAnimationDelay { get; set; } = Defaults.ResourceAnimationDelay;
+        
         public bool EnableRoleResourceMultipliers { get; set; } = Defaults.EnableRoleResourceMultipliers;
         public float TankResourceMultiplier { get; set; } = Defaults.TankResourceMultiplier;
-        public float MeleeResourceMultiplier { get; set; } = Defaults.MeleeResourceMultiplier;
-        public float RangedResourceMultiplier { get; set; } = Defaults.RangedResourceMultiplier;
+        public bool EnableTankJobResourceMultipliers { get; set; } = Defaults.EnableTankJobResourceMultipliers;
+        public float PldResourceMultiplier { get; set; } = Defaults.PldResourceMultiplier;
+        public float WarResourceMultiplier { get; set; } = Defaults.WarResourceMultiplier;
+        public float DrkResourceMultiplier { get; set; } = Defaults.DrkResourceMultiplier;
+        public float GnbResourceMultiplier { get; set; } = Defaults.GnbResourceMultiplier;
+
         public float HealerResourceMultiplier { get; set; } = Defaults.HealerResourceMultiplier;
+        public bool EnableHealerJobResourceMultipliers { get; set; } = Defaults.EnableHealerJobResourceMultipliers;
+        public float WhmResourceMultiplier { get; set; } = Defaults.WhmResourceMultiplier;
+        public float SchResourceMultiplier { get; set; } = Defaults.SchResourceMultiplier;
+        public float AstResourceMultiplier { get; set; } = Defaults.AstResourceMultiplier;
+        public float SgeResourceMultiplier { get; set; } = Defaults.SgeResourceMultiplier;
+
+        public float MeleeResourceMultiplier { get; set; } = Defaults.MeleeResourceMultiplier;
+        public bool EnableMeleeJobResourceMultipliers { get; set; } = Defaults.EnableMeleeJobResourceMultipliers;
+        public float MnkResourceMultiplier { get; set; } = Defaults.MnkResourceMultiplier;
+        public float DrgResourceMultiplier { get; set; } = Defaults.DrgResourceMultiplier;
+        public float NinResourceMultiplier { get; set; } = Defaults.NinResourceMultiplier;
+        public float SamResourceMultiplier { get; set; } = Defaults.SamResourceMultiplier;
+        public float RprResourceMultiplier { get; set; } = Defaults.RprResourceMultiplier;
+        public float VprResourceMultiplier { get; set; } = Defaults.VprResourceMultiplier;
+        public float BstResourceMultiplier { get; set; } = Defaults.BstResourceMultiplier;
+
+        public float RangedResourceMultiplier { get; set; } = Defaults.RangedResourceMultiplier;
+        public bool EnableRangedJobResourceMultipliers { get; set; } = Defaults.EnableRangedJobResourceMultipliers;
+        public float BrdResourceMultiplier { get; set; } = Defaults.BrdResourceMultiplier;
+        public float MchResourceMultiplier { get; set; } = Defaults.MchResourceMultiplier;
+        public float DncResourceMultiplier { get; set; } = Defaults.DncResourceMultiplier;
+        public float BlmResourceMultiplier { get; set; } = Defaults.BlmResourceMultiplier;
+        public float SmnResourceMultiplier { get; set; } = Defaults.SmnResourceMultiplier;
+        public float RdmResourceMultiplier { get; set; } = Defaults.RdmResourceMultiplier;
+        public float PctResourceMultiplier { get; set; } = Defaults.PctResourceMultiplier;
+        public float BluResourceMultiplier { get; set; } = Defaults.BluResourceMultiplier;
+
         public float OtherResourceMultiplier { get; set; } = Defaults.OtherResourceMultiplier;
+        
         public Vector4 ResourceSpentColor { get; set; } = Defaults.ResourceSpentColor;
         public Vector4 ResourceRecoveredColor { get; set; } = Defaults.ResourceRecoveredColor;
         #endregion

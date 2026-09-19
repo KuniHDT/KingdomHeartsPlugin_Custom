@@ -106,14 +106,70 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
             if (KingdomHeartsPlugin.Ui.Configuration.EnableRoleResourceMultipliers)
             {
                 var role = player.ClassJob.Value.Role;
-                roleMultiplier = role switch
+                var jobAbbr = player.ClassJob.Value.Abbreviation.ToString();
+
+                if (KingdomHeartsPlugin.Ui.Configuration.EnableTankJobResourceMultipliers && jobAbbr is "PLD" or "WAR" or "DRK" or "GNB")
                 {
-                    1 => KingdomHeartsPlugin.Ui.Configuration.TankResourceMultiplier,
-                    2 => KingdomHeartsPlugin.Ui.Configuration.MeleeResourceMultiplier,
-                    3 => KingdomHeartsPlugin.Ui.Configuration.RangedResourceMultiplier,
-                    4 => KingdomHeartsPlugin.Ui.Configuration.HealerResourceMultiplier,
-                    _ => KingdomHeartsPlugin.Ui.Configuration.OtherResourceMultiplier
-                };
+                    roleMultiplier = jobAbbr switch
+                    {
+                        "PLD" => KingdomHeartsPlugin.Ui.Configuration.PldResourceMultiplier,
+                        "WAR" => KingdomHeartsPlugin.Ui.Configuration.WarResourceMultiplier,
+                        "DRK" => KingdomHeartsPlugin.Ui.Configuration.DrkResourceMultiplier,
+                        "GNB" => KingdomHeartsPlugin.Ui.Configuration.GnbResourceMultiplier,
+                        _ => 1f
+                    };
+                }
+                else if (KingdomHeartsPlugin.Ui.Configuration.EnableHealerJobResourceMultipliers && jobAbbr is "WHM" or "SCH" or "AST" or "SGE")
+                {
+                    roleMultiplier = jobAbbr switch
+                    {
+                        "WHM" => KingdomHeartsPlugin.Ui.Configuration.WhmResourceMultiplier,
+                        "SCH" => KingdomHeartsPlugin.Ui.Configuration.SchResourceMultiplier,
+                        "AST" => KingdomHeartsPlugin.Ui.Configuration.AstResourceMultiplier,
+                        "SGE" => KingdomHeartsPlugin.Ui.Configuration.SgeResourceMultiplier,
+                        _ => 1f
+                    };
+                }
+                else if (KingdomHeartsPlugin.Ui.Configuration.EnableMeleeJobResourceMultipliers && jobAbbr is "MNK" or "DRG" or "NIN" or "SAM" or "RPR" or "VPR" or "BST")
+                {
+                    roleMultiplier = jobAbbr switch
+                    {
+                        "MNK" => KingdomHeartsPlugin.Ui.Configuration.MnkResourceMultiplier,
+                        "DRG" => KingdomHeartsPlugin.Ui.Configuration.DrgResourceMultiplier,
+                        "NIN" => KingdomHeartsPlugin.Ui.Configuration.NinResourceMultiplier,
+                        "SAM" => KingdomHeartsPlugin.Ui.Configuration.SamResourceMultiplier,
+                        "RPR" => KingdomHeartsPlugin.Ui.Configuration.RprResourceMultiplier,
+                        "VPR" => KingdomHeartsPlugin.Ui.Configuration.VprResourceMultiplier,
+                        "BST" => KingdomHeartsPlugin.Ui.Configuration.BstResourceMultiplier,
+                        _ => 1f
+                    };
+                }
+                else if (KingdomHeartsPlugin.Ui.Configuration.EnableRangedJobResourceMultipliers && jobAbbr is "BRD" or "MCH" or "DNC" or "BLM" or "SMN" or "RDM" or "PCT" or "BLU")
+                {
+                    roleMultiplier = jobAbbr switch
+                    {
+                        "BRD" => KingdomHeartsPlugin.Ui.Configuration.BrdResourceMultiplier,
+                        "MCH" => KingdomHeartsPlugin.Ui.Configuration.MchResourceMultiplier,
+                        "DNC" => KingdomHeartsPlugin.Ui.Configuration.DncResourceMultiplier,
+                        "BLM" => KingdomHeartsPlugin.Ui.Configuration.BlmResourceMultiplier,
+                        "SMN" => KingdomHeartsPlugin.Ui.Configuration.SmnResourceMultiplier,
+                        "RDM" => KingdomHeartsPlugin.Ui.Configuration.RdmResourceMultiplier,
+                        "PCT" => KingdomHeartsPlugin.Ui.Configuration.PctResourceMultiplier,
+                        "BLU" => KingdomHeartsPlugin.Ui.Configuration.BluResourceMultiplier,
+                        _ => 1f
+                    };
+                }
+                else
+                {
+                    roleMultiplier = role switch
+                    {
+                        1 => KingdomHeartsPlugin.Ui.Configuration.TankResourceMultiplier,
+                        2 => KingdomHeartsPlugin.Ui.Configuration.MeleeResourceMultiplier,
+                        3 => KingdomHeartsPlugin.Ui.Configuration.RangedResourceMultiplier,
+                        4 => KingdomHeartsPlugin.Ui.Configuration.HealerResourceMultiplier,
+                        _ => KingdomHeartsPlugin.Ui.Configuration.OtherResourceMultiplier
+                    };
+                }
             }
 
             float lengthMultiplier;

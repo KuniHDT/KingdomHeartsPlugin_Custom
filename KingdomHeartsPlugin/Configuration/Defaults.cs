@@ -40,11 +40,43 @@ namespace KingdomHeartsPlugin.Configuration
         public const int PvpHpPerLevel = 250;
         public const float HpAnimationSpeed = 50f;
         public const float HpAnimationDelay = 1.0f;
+        
         public const bool EnableRoleHpMultipliers = false;
         public const float TankHpMultiplier = 1.0f;
-        public const float MeleeHpMultiplier = 1.0f;
-        public const float RangedHpMultiplier = 1.0f;
+        public const bool EnableTankJobHpMultipliers = false;
+        public const float PldHpMultiplier = 1.0f;
+        public const float WarHpMultiplier = 1.0f;
+        public const float DrkHpMultiplier = 1.0f;
+        public const float GnbHpMultiplier = 1.0f;
+
         public const float HealerHpMultiplier = 1.0f;
+        public const bool EnableHealerJobHpMultipliers = false;
+        public const float WhmHpMultiplier = 1.0f;
+        public const float SchHpMultiplier = 1.0f;
+        public const float AstHpMultiplier = 1.0f;
+        public const float SgeHpMultiplier = 1.0f;
+        
+        public const float MeleeHpMultiplier = 1.0f;
+        public const bool EnableMeleeJobHpMultipliers = false;
+        public const float MnkHpMultiplier = 1.0f;
+        public const float DrgHpMultiplier = 1.0f;
+        public const float NinHpMultiplier = 1.0f;
+        public const float SamHpMultiplier = 1.0f;
+        public const float RprHpMultiplier = 1.0f;
+        public const float VprHpMultiplier = 1.0f;
+        public const float BstHpMultiplier = 1.0f;
+
+        public const float RangedHpMultiplier = 1.0f;
+        public const bool EnableRangedJobHpMultipliers = false;
+        public const float BrdHpMultiplier = 1.0f;
+        public const float MchHpMultiplier = 1.0f;
+        public const float DncHpMultiplier = 1.0f;
+        public const float BlmHpMultiplier = 1.0f;
+        public const float SmnHpMultiplier = 1.0f;
+        public const float RdmHpMultiplier = 1.0f;
+        public const float PctHpMultiplier = 1.0f;
+        public const float BluHpMultiplier = 1.0f;
+
         public const float OtherHpMultiplier = 1.0f;
         #endregion
 
@@ -78,10 +110,42 @@ namespace KingdomHeartsPlugin.Configuration
         
         public const bool EnableRoleResourceMultipliers = false;
         public const float TankResourceMultiplier = 1.0f;
-        public const float MeleeResourceMultiplier = 1.0f;
-        public const float RangedResourceMultiplier = 1.0f;
+        public const bool EnableTankJobResourceMultipliers = false;
+        public const float PldResourceMultiplier = 1.0f;
+        public const float WarResourceMultiplier = 1.0f;
+        public const float DrkResourceMultiplier = 1.0f;
+        public const float GnbResourceMultiplier = 1.0f;
+
         public const float HealerResourceMultiplier = 1.0f;
+        public const bool EnableHealerJobResourceMultipliers = false;
+        public const float WhmResourceMultiplier = 1.0f;
+        public const float SchResourceMultiplier = 1.0f;
+        public const float AstResourceMultiplier = 1.0f;
+        public const float SgeResourceMultiplier = 1.0f;
+
+        public const float MeleeResourceMultiplier = 1.0f;
+        public const bool EnableMeleeJobResourceMultipliers = false;
+        public const float MnkResourceMultiplier = 1.0f;
+        public const float DrgResourceMultiplier = 1.0f;
+        public const float NinResourceMultiplier = 1.0f;
+        public const float SamResourceMultiplier = 1.0f;
+        public const float RprResourceMultiplier = 1.0f;
+        public const float VprResourceMultiplier = 1.0f;
+        public const float BstResourceMultiplier = 1.0f;
+
+        public const float RangedResourceMultiplier = 1.0f;
+        public const bool EnableRangedJobResourceMultipliers = false;
+        public const float BrdResourceMultiplier = 1.0f;
+        public const float MchResourceMultiplier = 1.0f;
+        public const float DncResourceMultiplier = 1.0f;
+        public const float BlmResourceMultiplier = 1.0f;
+        public const float SmnResourceMultiplier = 1.0f;
+        public const float RdmResourceMultiplier = 1.0f;
+        public const float PctResourceMultiplier = 1.0f;
+        public const float BluResourceMultiplier = 1.0f;
+
         public const float OtherResourceMultiplier = 1.0f;
+        
         public static readonly Vector4 ResourceSpentColor = new(1f, 0f, 0f, 1f);
         public static readonly Vector4 ResourceRecoveredColor = new(0.4f, 0.8f, 1f, 0.8f);
         #endregion
