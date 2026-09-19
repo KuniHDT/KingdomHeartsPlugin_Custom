@@ -37,6 +37,10 @@ namespace KingdomHeartsPlugin.Configuration
         public float LowHpPercent { get; set; } = Defaults.LowHpPercent;
         public bool ShowHpRecovery { get; set; } = Defaults.ShowHpRecovery;
         public bool ShowHpVal { get; set; } = Defaults.ShowHpVal;
+        public bool LengthByLevel { get; set; } = Defaults.LengthByLevel;
+        public int HpPerLevel { get; set; } = Defaults.HpPerLevel;
+        public bool PvpLengthByLevel { get; set; } = Defaults.PvpLengthByLevel;
+        public int PvpHpPerLevel { get; set; } = Defaults.PvpHpPerLevel;
         #endregion
 
         #region Resource
@@ -59,6 +63,10 @@ namespace KingdomHeartsPlugin.Configuration
         public int MinimumCpLength { get; set; } = Defaults.MinimumCpLength;
         public bool TruncateMp { get; set; } = Defaults.TruncateMp;
         public bool ShowResourceVal { get; set; } = Defaults.ShowResourceVal;
+        public bool ResourceLengthByLevel { get; set; } = Defaults.ResourceLengthByLevel;
+        public int MpPerLevel { get; set; } = Defaults.MpPerLevel;
+        public int GpPerLevel { get; set; } = Defaults.GpPerLevel;
+        public int CpPerLevel { get; set; } = Defaults.CpPerLevel;
         #endregion
 
         #region Limit Break

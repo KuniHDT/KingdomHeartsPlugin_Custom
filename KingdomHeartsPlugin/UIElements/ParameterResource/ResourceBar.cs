@@ -76,7 +76,32 @@ namespace KingdomHeartsPlugin.UIElements.ParameterResource
                 lengthRate = KingdomHeartsPlugin.Ui.Configuration.GpPerPixelLength;
             }
 
-            var lengthMultiplier = ResourceMax < minLength ? minLength / (float)ResourceMax : ResourceMax > maxLength ? (float)maxLength / ResourceMax : 1f;
+            float lengthMultiplier;
+
+            if (KingdomHeartsPlugin.Ui.Configuration.ResourceLengthByLevel)
+            {
+                int resourcePerLevel = ResourceType switch
+                {
+                    Resource.Mp => KingdomHeartsPlugin.Ui.Configuration.MpPerLevel,
+                    Resource.Cp => KingdomHeartsPlugin.Ui.Configuration.CpPerLevel,
+                    Resource.Gp => KingdomHeartsPlugin.Ui.Configuration.GpPerLevel,
+                    _ => 0
+                };
+
+                // Scale off the configured minimum visual length, adding configured Resource equivalent per level
+                float simulatedMax = minLength + (player.Level * resourcePerLevel);
+                lengthMultiplier = simulatedMax / (float)ResourceMax;
+            }
+            else
+            {
+                // Standard min/max limits
+                lengthMultiplier = ResourceMax < minLength
+                    ? minLength / (float)ResourceMax
+                    : ResourceMax > maxLength
+                        ? (float)maxLength / ResourceMax
+                        : 1f;
+            }
+
             MaxResourceLength = (int)Math.Ceiling(ResourceMax / lengthRate * lengthMultiplier);
             ResourceLength = (int)Math.Ceiling(ResourceValue / lengthRate * lengthMultiplier);
         }

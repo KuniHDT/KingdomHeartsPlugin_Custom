@@ -1,70 +1,77 @@
-﻿using System;
+using System;
 using System.Numerics;
-using Dalamud.Interface.Textures;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Textures;
 using KingdomHeartsPlugin.Utilities;
 
 namespace KingdomHeartsPlugin.UIElements
 {
     internal class Ring : IDisposable
     {
-        public Ring(string image, float colorR = 1f, float colorG = 1f, float colorB = 1f, float alpha = 1f)
+        public Ring(string imagePath, float colorR = 1f, float colorG = 1f, float colorB = 1f, float alpha = 1f)
         {
-            ImagePath = image;
+            ImagePath = imagePath;
             Color = new Vector3(colorR, colorG, colorB);
             Alpha = alpha;
         }
 
         public void Draw(ImDrawListPtr drawList, float percent, Vector2 position, int segments, float scale = 1f)
         {
-            if (segments < 1) segments = 1;
-            if (segments > 4) segments = 4;
+            if (percent <= 0f) return;
 
-            float size = (256 * scale);
-            float sizeHalf = (size / 2f);
-            percent = Math.Max(percent > 0 ? 0.002f : 0, percent);
-            var color = ImGui.GetColorU32(new Vector4(Color.X, Color.Y, Color.Z, Alpha));
-            drawList.PushClipRect(position, position + new Vector2(sizeHalf, sizeHalf + 1));
+            segments = Math.Clamp(segments, 1, 4);
+            percent = Math.Clamp(percent, 0.002f, 1f);
 
-            ImageDrawing.ImageRotated(drawList, Image.GetWrapOrEmpty().Handle, new Vector2(position.X + sizeHalf, position.Y + sizeHalf), new Vector2(size, size), (-0.25f + Math.Min(percent * 0.25f * segments, 0.25f)) * (float)Math.PI * 2, color);
+            var textureWrap = Image?.GetWrapOrEmpty();
+            if (textureWrap == null || textureWrap.Handle == IntPtr.Zero) return;
 
-            drawList.PopClipRect();
+            float size = 256f * scale;
+            float halfSize = size * 0.5f;
+            Vector2 center = position + new Vector2(halfSize, halfSize);
+            uint color = ImGui.GetColorU32(new Vector4(Color.X, Color.Y, Color.Z, Alpha));
 
-            if (segments < 2) return;
-            if (percent * 0.25f * segments < 0.25f) return;
+            // Quadrant clip boundaries defined around origin (Top-Left, Top-Right, Bottom-Right, Bottom-Left)
+            Span<Vector4> quadrantClips = stackalloc Vector4[4]
+            {
+                new(position.X, position.Y, position.X + halfSize + 0.5f, position.Y + halfSize + 0.5f),
+                new(position.X + halfSize - 0.5f, position.Y, position.X + size + 0.5f, position.Y + halfSize + 0.5f),
+                new(position.X + halfSize - 0.5f, position.Y + halfSize - 0.5f, position.X + size + 0.5f, position.Y + size + 0.5f),
+                new(position.X - 0.5f, position.Y + halfSize - 0.5f, position.X + halfSize + 0.5f, position.Y + size + 0.5f)
+            };
 
-            drawList.PushClipRect(position + new Vector2(sizeHalf - 1, 0), position + new Vector2(sizeHalf * 2 + 2, sizeHalf));
+            const float stepPerSegment = 0.25f;
+            float totalScaledPercent = percent * stepPerSegment * segments;
 
-            ImageDrawing.ImageRotated(drawList, Image.GetWrapOrEmpty().Handle, new Vector2(position.X + sizeHalf, position.Y + sizeHalf), new Vector2(size, size), (-0.25f + Math.Min(Math.Max(percent * 0.25f * segments, 0.25f), 0.5f)) * (float)Math.PI * 2, color);
+            for (int i = 0; i < segments; i++)
+            {
+                float minThreshold = i * stepPerSegment;
+                if (totalScaledPercent < minThreshold) break;
 
-            drawList.PopClipRect();
+                float maxThreshold = (i + 1) * stepPerSegment;
+                float clampedProgress = Math.Min(Math.Max(totalScaledPercent, minThreshold), maxThreshold);
+                float angle = (-0.25f + clampedProgress) * MathF.PI * 2f;
 
-            if (segments < 3) return;
-            if (percent * 0.25f * segments < 0.5f) return;
+                Vector4 clip = quadrantClips[i];
+                drawList.PushClipRect(new Vector2(clip.X, clip.Y), new Vector2(clip.Z, clip.W), true);
 
-            drawList.PushClipRect(position + new Vector2(sizeHalf - 1, sizeHalf - 1), position + new Vector2(sizeHalf * 2 + 2, sizeHalf * 2  + 2));
+                ImageDrawing.ImageRotated(
+                    drawList,
+                    textureWrap.Handle,
+                    center,
+                    new Vector2(size, size),
+                    angle,
+                    color
+                );
 
-            ImageDrawing.ImageRotated(drawList, Image.GetWrapOrEmpty().Handle, new Vector2(position.X + sizeHalf, position.Y + sizeHalf), new Vector2(size, size), (-0.25f + Math.Min(Math.Max(percent * 0.25f * segments, 0.5f), 0.75f)) * (float)Math.PI * 2, color);
-
-            drawList.PopClipRect();
-            
-            if (segments < 4) return;
-            if (percent * 0.25f * segments < 0.75f) return;
-
-            drawList.PushClipRect(position + new Vector2(-1, sizeHalf - 1), position + new Vector2(sizeHalf + 2, sizeHalf * 2 + 2));
-
-            ImageDrawing.ImageRotated(drawList, Image.GetWrapOrEmpty().Handle, new Vector2(position.X + sizeHalf, position.Y + sizeHalf), new Vector2(size, size), (-0.25f + Math.Min(Math.Max(percent * 0.25f * segments, 0.75f), 1f)) * (float)Math.PI * 2, color);
-
-            drawList.PopClipRect();
+                drawList.PopClipRect();
+            }
         }
+
         public void Dispose()
         {
         }
 
-        private ISharedImmediateTexture Image
-        {
-            get => ImageDrawing.GetSharedTexture(this.ImagePath);
-        }
+        private ISharedImmediateTexture Image => ImageDrawing.GetSharedTexture(ImagePath);
         private string ImagePath { get; }
         internal Vector3 Color { get; set; }
         internal float Alpha { get; set; }

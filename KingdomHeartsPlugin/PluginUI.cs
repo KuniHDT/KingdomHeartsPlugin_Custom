@@ -290,6 +290,8 @@ namespace KingdomHeartsPlugin
                         Configuration.MinimumHpForLength = 1;
                 }
 
+
+
                 if (ImGui.IsItemHovered())
                 {
                     Vector2 m = ImGui.GetIO().MousePos;
@@ -299,10 +301,32 @@ namespace KingdomHeartsPlugin
                         $"Defines when the total bar size, including the ring, will stop getting smaller.\n1000 would make the bar stop getting smaller at 1000 MaxHP. Prevents an HP bar that's too small.\n\nDefault: {Defaults.MinimumHpForLength}");
                     ImGui.End();
                 }
+
+                ImGui.Separator();
+                var lengthByLevel = Configuration.LengthByLevel;
+                if (ImGui.Checkbox("Scale Max Length by Level", ref lengthByLevel))
+                {
+                    Configuration.LengthByLevel = lengthByLevel;
+                }
+
+                if (Configuration.LengthByLevel)
+                {
+                    var hpPerLevel = Configuration.HpPerLevel;
+                    if (ImGui.InputInt("Simulated HP added per Level", ref hpPerLevel, 10, 100))
+                    {
+                        Configuration.HpPerLevel = hpPerLevel;
+                        if (Configuration.HpPerLevel < 1)
+                            Configuration.HpPerLevel = 1;
+                    }
+                    if (ImGui.IsItemHovered())
+                    {
+                        Tooltip("Overrides manual Max HP limits. Replaces your actual Max HP with a simulated pool based on (Level * this value) + Minimum Length to determine bar size.");
+                    }
+                }
+
                 ImGui.EndGroup();
                 ImGui.TreePop();
             }
-
 
             if (ImGui.TreeNode("PvP"))
             {
@@ -547,6 +571,17 @@ namespace KingdomHeartsPlugin
             ImGui.NewLine();
             ImGui.Text("Length");
             ImGui.Separator();
+
+            var resourceLengthByLevel = Configuration.ResourceLengthByLevel;
+            if (ImGui.Checkbox("Scale Max Length by Level##Resource", ref resourceLengthByLevel))
+            {
+                Configuration.ResourceLengthByLevel = resourceLengthByLevel;
+            }
+            if (ImGui.IsItemHovered())
+            {
+                Tooltip("Overrides manual Max length limits. Replaces actual max resource with a simulated pool based on (Level * per-level value) + Minimum Length.");
+            }
+
             ImGui.Text("MP");
             ImGui.Separator();
 
@@ -589,6 +624,18 @@ namespace KingdomHeartsPlugin
                 if (Configuration.MinimumMpLength < 1)
                     Configuration.MinimumMpLength = 1;
             }
+
+            if (Configuration.ResourceLengthByLevel)
+            {
+                var mpPerLevel = Configuration.MpPerLevel;
+                if (ImGui.InputInt("Simulated MP added per Level", ref mpPerLevel, 10, 50))
+                {
+                    Configuration.MpPerLevel = mpPerLevel;
+                    if (Configuration.MpPerLevel < 1)
+                        Configuration.MpPerLevel = 1;
+                }
+            }
+
             if (ImGui.IsItemHovered())
             {
                 Vector2 m = ImGui.GetIO().MousePos;
@@ -656,6 +703,19 @@ namespace KingdomHeartsPlugin
                 if (Configuration.MinimumGpLength < 1)
                     Configuration.MinimumGpLength = 1;
             }
+
+            // Below Configuration.MinimumGpLength block:
+            if (Configuration.ResourceLengthByLevel)
+            {
+                var gpPerLevel = Configuration.GpPerLevel;
+                if (ImGui.InputInt("Simulated GP added per Level", ref gpPerLevel, 1, 10))
+                {
+                    Configuration.GpPerLevel = gpPerLevel;
+                    if (Configuration.GpPerLevel < 1)
+                        Configuration.GpPerLevel = 1;
+                }
+            }
+
             if (ImGui.IsItemHovered())
             {
                 Vector2 m = ImGui.GetIO().MousePos;
@@ -709,6 +769,19 @@ namespace KingdomHeartsPlugin
                 if (Configuration.MinimumCpLength < 1)
                     Configuration.MinimumCpLength = 1;
             }
+
+            // Below Configuration.MinimumCpLength block:
+            if (Configuration.ResourceLengthByLevel)
+            {
+                var cpPerLevel = Configuration.CpPerLevel;
+                if (ImGui.InputInt("Simulated CP added per Level", ref cpPerLevel, 1, 10))
+                {
+                    Configuration.CpPerLevel = cpPerLevel;
+                    if (Configuration.CpPerLevel < 1)
+                        Configuration.CpPerLevel = 1;
+                }
+            }
+
             if (ImGui.IsItemHovered())
             {
                 Vector2 m = ImGui.GetIO().MousePos;

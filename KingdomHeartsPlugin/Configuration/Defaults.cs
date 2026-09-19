@@ -31,6 +31,10 @@ namespace KingdomHeartsPlugin.Configuration
         public const float LowHpPercent  = 25f;
         public const bool ShowHpRecovery  = true;
         public const bool ShowHpVal  = true;
+        public const bool LengthByLevel = false;
+        public const int HpPerLevel = 500;
+        public const bool PvpLengthByLevel = false;
+        public const int PvpHpPerLevel = 250;
         #endregion
 
         #region Resource
@@ -53,6 +57,10 @@ namespace KingdomHeartsPlugin.Configuration
         public const int MinimumCpLength  = 1;
         public const bool TruncateMp  = false;
         public const bool ShowResourceVal  = true;
+        public const bool ResourceLengthByLevel = false;
+        public const int MpPerLevel = 50;
+        public const int GpPerLevel = 5;
+        public const int CpPerLevel = 5;
         #endregion
 
         #region Limit Break
