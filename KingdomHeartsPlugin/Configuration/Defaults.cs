@@ -40,8 +40,13 @@ namespace KingdomHeartsPlugin.Configuration
         public const int PvpHpPerLevel = 250;
         public const float HpAnimationSpeed = 50f;
         public const float HpAnimationDelay = 1.0f;
-        
+
+        public const bool ShowShield = true;
+        public const bool ShieldScalesWithLevel = true;
+        public static readonly Vector4 ShieldColor = new(1f, 0.84f, 0f, 0.75f);
+
         public const bool EnableRoleHpMultipliers = false;
+
         public const float TankHpMultiplier = 1.0f;
         public const bool EnableTankJobHpMultipliers = false;
         public const float PldHpMultiplier = 1.0f;

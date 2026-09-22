@@ -337,6 +337,24 @@ namespace KingdomHeartsPlugin
             if (ImGui.SliderFloat("Animation Delay (s)", ref hpAnimDelay, 0f, 3f)) Configuration.HpAnimationDelay = hpAnimDelay;
             HoverTooltip("How long to wait before the HP drain/fill animation starts after a change.");
 
+            ImGui.Spacing();
+            SectionHeader("Shield & Barrier");
+
+            var showShield = Configuration.ShowShield;
+            if (ImGui.Checkbox("Show Shield / Barrier", ref showShield)) Configuration.ShowShield = showShield;
+
+            if (Configuration.ShowShield)
+            {
+                ImGui.Indent();
+
+                var scaleShield = Configuration.ShieldScalesWithLevel;
+                if (ImGui.Checkbox("Scale Shield with Level Scaling", ref scaleShield)) Configuration.ShieldScalesWithLevel = scaleShield;
+
+                var shieldColor = Configuration.ShieldColor;
+                if (ImGui.ColorEdit4("Shield Color", ref shieldColor)) Configuration.ShieldColor = shieldColor;
+                ImGui.Unindent();
+            }
+
             ImGui.EndTabItem();
         }
 

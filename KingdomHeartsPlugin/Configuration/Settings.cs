@@ -46,7 +46,11 @@ namespace KingdomHeartsPlugin.Configuration
         public int PvpHpPerLevel { get; set; } = Defaults.PvpHpPerLevel;
         public float HpAnimationSpeed { get; set; } = Defaults.HpAnimationSpeed;
         public float HpAnimationDelay { get; set; } = Defaults.HpAnimationDelay;
-        
+
+        public bool ShowShield { get; set; } = Defaults.ShowShield;
+        public bool ShieldScalesWithLevel { get; set; } = Defaults.ShieldScalesWithLevel;
+        public Vector4 ShieldColor { get; set; } = Defaults.ShieldColor;
+
         public bool EnableRoleHpMultipliers { get; set; } = Defaults.EnableRoleHpMultipliers;
         public float TankHpMultiplier { get; set; } = Defaults.TankHpMultiplier;
         public bool EnableTankJobHpMultipliers { get; set; } = Defaults.EnableTankJobHpMultipliers;

@@ -35,6 +35,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             RingOutline = new Ring(Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_outline_segment.png"));
             HealthRing = new Ring(Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_health_segment.png"));
             HealthRestoredRing = new Ring(Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_health_restored_segment.png"));
+            ShieldRing = new Ring(Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_health_restored_segment.png"));
             _limitGauge = new LimitGauge();
             _resourceBar = new ResourceBar();
             _expBar = new ClassBar();
@@ -66,7 +67,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 byte role = player.ClassJob.ValueNullable?.Role ?? 0;
                 uint jobId = player.ClassJob.ValueNullable?.RowId ?? 0;
                 UpdateHealth(player);
-                DrawHealth(drawList, player.CurrentHp, player.MaxHp, player.Level, jobId, role);
+                DrawHealth(drawList, player.CurrentHp, player.MaxHp, player.Level, jobId, role, player.ShieldPercentage);
             }
 
             if (KingdomHeartsPlugin.Ui.Configuration.ResourceBarEnabled) _resourceBar?.Draw(player);
@@ -353,7 +354,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             };
         }
 
-        private void DrawHealth(ImDrawListPtr drawList, uint hp, uint maxHp, byte level, uint jobId, byte role)
+        private void DrawHealth(ImDrawListPtr drawList, uint hp, uint maxHp, byte level, uint jobId, byte role, byte shieldPercentage)
         {
             var fullRing = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpForFullRing : KingdomHeartsPlugin.Ui.Configuration.HpForFullRing;
             var minimumMaxHpSize = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpMinimumHpForLength : KingdomHeartsPlugin.Ui.Configuration.MinimumHpForLength;
@@ -408,6 +409,25 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 }
             }
 
+            // Draw Shield Ring FIRST (Behind the restored/foreground bars)
+            if (KingdomHeartsPlugin.Ui.Configuration.ShowShield && shieldPercentage > 0 && ShieldRing is not null)
+            {
+                float shieldHp = maxHp * (shieldPercentage / 100f);
+                float scaledShieldHp = KingdomHeartsPlugin.Ui.Configuration.ShieldScalesWithLevel ? GetScaledHp(shieldHp) : shieldHp;
+                float scaledCurrentHp = GetScaledHp(KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp);
+                float scaledMaxHp = GetScaledHp(maxHp);
+
+                // Clamp the total visual HP to not exceed the Max HP boundary
+                float clampedTotalHp = Math.Min(scaledCurrentHp + scaledShieldHp, scaledMaxHp);
+                float shieldPercent = clampedTotalHp / (float)fullRing;
+
+                var shieldColor = KingdomHeartsPlugin.Ui.Configuration.ShieldColor;
+                ShieldRing.Color = new Vector3(shieldColor.X, shieldColor.Y, shieldColor.Z);
+                ShieldRing.Alpha = shieldColor.W;
+                ShieldRing.Draw(drawList, shieldPercent, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+            }
+
+            // Draw Restored Health
             if (KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery)
             {
                 if (HpTemp < SmoothCurrentHp)
@@ -428,11 +448,24 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 HealthLostRing.Draw(drawList, currentHpLength, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
             }
 
+            // Shield Ring
+            if (KingdomHeartsPlugin.Ui.Configuration.ShowShield && shieldPercentage > 0 && ShieldRing is not null)
+            {
+                float shieldHp = maxHp * (shieldPercentage / 100f);
+                float totalHpWithShield = (KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery ? HpTemp : SmoothCurrentHp) + shieldHp;
+                float shieldPercent = GetScaledHp(totalHpWithShield) / (float)fullRing;
+
+                var shieldColor = KingdomHeartsPlugin.Ui.Configuration.ShieldColor;
+                ShieldRing.Color = new Vector3(shieldColor.X, shieldColor.Y, shieldColor.Z);
+                ShieldRing.Alpha = shieldColor.W;
+                ShieldRing.Draw(drawList, shieldPercent, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
+            }
+
             RingOutline?.Draw(drawList, maxHealthPercent, drawPosition + new Vector2(0, (int)(HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f * KingdomHeartsPlugin.Ui.Configuration.Scale)), 3, KingdomHeartsPlugin.Ui.Configuration.Scale);
-            DrawLongHealthBar(drawList, hp, maxHp, scaleBeforeRing);
+            DrawLongHealthBar(drawList, hp, maxHp, scaleBeforeRing, shieldPercentage);
         }
 
-        private void DrawLongHealthBar(ImDrawListPtr drawList, uint hp, uint maxHp, bool scaleBeforeRing)
+        private void DrawLongHealthBar(ImDrawListPtr drawList, uint hp, uint maxHp, bool scaleBeforeRing, byte shieldPercentage)
         {
             var fullRing = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpForFullRing : KingdomHeartsPlugin.Ui.Configuration.HpForFullRing;
             var HpPerWidth = KingdomHeartsPlugin.IsInPvp ? KingdomHeartsPlugin.Ui.Configuration.PvpHpPerPixelLongBar : KingdomHeartsPlugin.Ui.Configuration.HpPerPixelLongBar;
@@ -448,16 +481,41 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             var damagedHealthLength = scaleBeforeRing
                 ? Math.Max(0, GetScaledHp(HpBeforeDamaged) - fullRing) / HpPerWidth
                 : Math.Max(0, HpBeforeDamaged - fullRing) * HpLengthMultiplier / HpPerWidth;
-            
+
             float actualRestoredHp = KingdomHeartsPlugin.Ui.Configuration.ShowHpRecovery && HpTemp < SmoothCurrentHp ? SmoothCurrentHp : 0;
             var restoredHealthLength = scaleBeforeRing
                 ? Math.Max(0, GetScaledHp(actualRestoredHp) - fullRing) / HpPerWidth
                 : Math.Max(0, actualRestoredHp - fullRing) * HpLengthMultiplier / HpPerWidth;
-            
+
             var maxHealthLength = scaleBeforeRing
                 ? Math.Max(0, GetScaledHp(maxHp) - fullRing) / HpPerWidth
                 : Math.Max(0, maxHp - fullRing) * HpLengthMultiplier / HpPerWidth;
-            
+
+            // Calculate Shield Length
+            var totalShieldLength = 0f;
+            if (KingdomHeartsPlugin.Ui.Configuration.ShowShield && shieldPercentage > 0)
+            {
+                float shieldHp = maxHp * (shieldPercentage / 100f);
+                if (scaleBeforeRing)
+                {
+                    float scaledCurrent = GetScaledHp(actualCurrentHp);
+                    float scaledShield = KingdomHeartsPlugin.Ui.Configuration.ShieldScalesWithLevel ? GetScaledHp(shieldHp) : shieldHp;
+                    float scaledMax = GetScaledHp(maxHp);
+
+                    // Clamp to scaled Max HP
+                    float clampedTotal = Math.Min(scaledCurrent + scaledShield, scaledMax);
+                    totalShieldLength = Math.Max(0, clampedTotal - fullRing) / HpPerWidth;
+                }
+                else
+                {
+                    float effectiveShield = KingdomHeartsPlugin.Ui.Configuration.ShieldScalesWithLevel ? shieldHp : shieldHp / HpLengthMultiplier;
+
+                    // Clamp to raw Max HP
+                    float clampedTotal = Math.Min(actualCurrentHp + effectiveShield, maxHp);
+                    totalShieldLength = Math.Max(0, clampedTotal - fullRing) * HpLengthMultiplier / HpPerWidth;
+                }
+            }
+
             if (maxHealthLength > 0)
             {
                 Vector3 lowHealthColor = ColorAddons.Interpolate(_bgColor, new Vector3(1, 0, 0), LowHealthAlpha);
@@ -470,17 +528,24 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
                 ImageDrawing.DrawImageScaled(drawList, BarColorlessTexture, new Vector2(basePosition.X - damagedHealthLength, basePosition.Y + 4), new Vector2(damagedHealthLength, 1), ImGui.GetColorU32(new Vector4(1f, 0f, 0f, DamagedHealthAlpha)));
             }
 
+            // Draw Shield Long Bar FIRST
+            if (totalShieldLength > 0)
+            {
+                var shieldColor = KingdomHeartsPlugin.Ui.Configuration.ShieldColor;
+                ImageDrawing.DrawImageScaled(drawList, BarRecoveryTexture, new Vector2(basePosition.X - totalShieldLength, basePosition.Y + 4), new Vector2(totalShieldLength, 1), ImGui.GetColorU32(shieldColor));
+            }
+
+            // Draw Restored (Blue)
             if (restoredHealthLength > 0)
             {
                 ImageDrawing.DrawImageScaled(drawList, BarRecoveryTexture, new Vector2(basePosition.X - restoredHealthLength, basePosition.Y + 4), new Vector2(restoredHealthLength, 1));
             }
 
+            // Draw Health (Green)
             if (healthLength > 0)
             {
-                // Normal green/foreground bar
                 ImageDrawing.DrawImageScaled(drawList, BarForegroundTexture, new Vector2(basePosition.X - healthLength, basePosition.Y + 4), new Vector2(healthLength, 1));
 
-                // Flash overlay for the long bar
                 if (_flashAlpha > 0)
                 {
                     ImageDrawing.DrawImageScaled(drawList, BarColorlessTexture, new Vector2(basePosition.X - healthLength, basePosition.Y + 4), new Vector2(healthLength, 1), ImGui.GetColorU32(new Vector4(1f, 0f, 0f, _flashAlpha)));
@@ -517,6 +582,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             HealthRingBg = null;
             RingOutline = null;
             HealthRestoredRing = null;
+            ShieldRing = null;
             HealthLostRing = null;
         }
 
@@ -596,6 +662,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         private Ring? RingOutline { get; set; }
         private Ring? HealthRingBg { get; set; }
         private Ring? HealthRestoredRing { get; set; }
+        private Ring? ShieldRing { get; set; }
         private Ring? HealthLostRing { get; set; }
     }
 }
