@@ -44,6 +44,9 @@ namespace KingdomHeartsPlugin.Configuration
         public const bool ShowShield = true;
         public const bool ShieldScalesWithLevel = true;
         public static readonly Vector4 ShieldColor = new(1f, 0.84f, 0f, 0.75f);
+        public const float ShieldAnimationSpeed = 50f;
+        public const float ShieldAnimationDelay = 1.0f;
+        public const int ShieldFillDirection = 0;
 
         public const bool EnableRoleHpMultipliers = false;
 

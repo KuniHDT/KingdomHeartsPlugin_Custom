@@ -50,6 +50,9 @@ namespace KingdomHeartsPlugin.Configuration
         public bool ShowShield { get; set; } = Defaults.ShowShield;
         public bool ShieldScalesWithLevel { get; set; } = Defaults.ShieldScalesWithLevel;
         public Vector4 ShieldColor { get; set; } = Defaults.ShieldColor;
+        public float ShieldAnimationSpeed { get; set; } = Defaults.ShieldAnimationSpeed;
+        public float ShieldAnimationDelay { get; set; } = Defaults.ShieldAnimationDelay;
+        public int ShieldFillDirection { get; set; } = Defaults.ShieldFillDirection;
 
         public bool EnableRoleHpMultipliers { get; set; } = Defaults.EnableRoleHpMultipliers;
         public float TankHpMultiplier { get; set; } = Defaults.TankHpMultiplier;

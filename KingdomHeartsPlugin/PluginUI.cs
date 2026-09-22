@@ -350,8 +350,24 @@ namespace KingdomHeartsPlugin
                 var scaleShield = Configuration.ShieldScalesWithLevel;
                 if (ImGui.Checkbox("Scale Shield with Level Scaling", ref scaleShield)) Configuration.ShieldScalesWithLevel = scaleShield;
 
+                var shieldFill = Configuration.ShieldFillDirection;
+                if (ImGui.Combo("Shield Fill Direction", ref shieldFill, new string[] { "End to Begin (Tip Anchor)", "Begin to End (Base Anchor)" }, 2))
+                {
+                    Configuration.ShieldFillDirection = shieldFill;
+                }
+                HoverTooltip("Determines if the shield overlays the end of your health, or the beginning.");
+
                 var shieldColor = Configuration.ShieldColor;
                 if (ImGui.ColorEdit4("Shield Color", ref shieldColor)) Configuration.ShieldColor = shieldColor;
+
+                var shieldAnimSpeed = Configuration.ShieldAnimationSpeed;
+                if (ImGui.SliderFloat("Shield Animation Speed (% Max HP/s)", ref shieldAnimSpeed, 10f, 200f)) Configuration.ShieldAnimationSpeed = shieldAnimSpeed;
+                HoverTooltip("How fast the shield catches up to actual shield value.");
+
+                var shieldAnimDelay = Configuration.ShieldAnimationDelay;
+                if (ImGui.SliderFloat("Shield Animation Delay (s)", ref shieldAnimDelay, 0f, 3f)) Configuration.ShieldAnimationDelay = shieldAnimDelay;
+                HoverTooltip("How long to wait before shield animation starts after a shield change.");
+
                 ImGui.Unindent();
             }
 
