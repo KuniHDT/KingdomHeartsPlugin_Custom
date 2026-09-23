@@ -9,12 +9,18 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
     public class JobRing : IDisposable
     {
         // Animation state (mirrors HealthFrame behavior)
-        private float _smoothPrimaryPercent;
-        private float _smoothSecondaryPercent;
-        private float _primaryBeforeSpent; // damage trail start for primary gauge
-        private float _secondaryBeforeSpent; // for secondary gauge
-        private float _primaryAnimTimer;
-        private float _secondaryAnimTimer;
+        private float _primaryTemp;          // Analogous to HpTemp (filling current value)
+        private float _primaryBeforeSpent;   // Analogous to HpBeforeDamaged (draining damage trail)
+        private float _primaryDamageTimer;  // Delay timer for gauge spend
+        private float _primaryHealTimer;    // Delay timer for gauge gain
+        private float _primaryDamagedAlpha;  // Alpha channel for damage trail
+
+        private float _secondaryTemp;
+        private float _secondaryBeforeSpent;
+        private float _secondaryDamageTimer;
+        private float _secondaryHealTimer;
+        private float _secondaryDamagedAlpha;
+
         private bool _initialized;
 
         // State trackers to correctly detect gauge and job changes
@@ -169,94 +175,164 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
             // Initialise animation state on first draw OR when job changes
             if (!_initialized || _lastJobId != jobId)
             {
-                _smoothPrimaryPercent = targetPrimary;
-                _smoothSecondaryPercent = targetSecondary;
+                _primaryTemp = targetPrimary;
                 _primaryBeforeSpent = targetPrimary;
+                _primaryDamageTimer = 0f;
+                _primaryHealTimer = 0f;
+                _primaryDamagedAlpha = 0f;
+
+                _secondaryTemp = targetSecondary;
                 _secondaryBeforeSpent = targetSecondary;
+                _secondaryDamageTimer = 0f;
+                _secondaryHealTimer = 0f;
+                _secondaryDamagedAlpha = 0f;
+
                 _lastTargetPrimary = targetPrimary;
                 _lastTargetSecondary = targetSecondary;
                 _lastJobId = jobId;
                 _initialized = true;
             }
 
-            // Detect changes in target values
+            // Detect changes in primary target value (mirrors UpdateHealth)
             if (Math.Abs(targetPrimary - _lastTargetPrimary) > 0.0001f)
             {
                 if (targetPrimary < _lastTargetPrimary)
                 {
-                    _primaryAnimTimer = cfg.JobRingAnimationDelay;
-                    _primaryBeforeSpent = Math.Max(_primaryBeforeSpent, _smoothPrimaryPercent);
+                    bool isDamageAnimating = _primaryBeforeSpent > _lastTargetPrimary && _primaryDamageTimer <= 0;
+                    if (!isDamageAnimating)
+                    {
+                        _primaryDamageTimer = cfg.JobRingAnimationDelay;
+                    }
+                    _primaryBeforeSpent = Math.Max(_primaryBeforeSpent, _lastTargetPrimary);
+                    _primaryDamagedAlpha = 1f;
+                }
+                else if (targetPrimary > _lastTargetPrimary)
+                {
+                    bool isHealAnimating = _primaryTemp < _lastTargetPrimary && _primaryHealTimer <= 0;
+                    if (!isHealAnimating)
+                    {
+                        _primaryHealTimer = cfg.JobRingAnimationDelay;
+                    }
+                    _primaryTemp = Math.Min(_primaryTemp, _lastTargetPrimary);
                 }
                 _lastTargetPrimary = targetPrimary;
             }
+
+            // Detect changes in secondary target value
             if (showSecondary && Math.Abs(targetSecondary - _lastTargetSecondary) > 0.0001f)
             {
                 if (targetSecondary < _lastTargetSecondary)
                 {
-                    _secondaryAnimTimer = cfg.JobRingAnimationDelay;
-                    _secondaryBeforeSpent = Math.Max(_secondaryBeforeSpent, _smoothSecondaryPercent);
+                    bool isDamageAnimating = _secondaryBeforeSpent > _lastTargetSecondary && _secondaryDamageTimer <= 0;
+                    if (!isDamageAnimating)
+                    {
+                        _secondaryDamageTimer = cfg.JobRingAnimationDelay;
+                    }
+                    _secondaryBeforeSpent = Math.Max(_secondaryBeforeSpent, _lastTargetSecondary);
+                    _secondaryDamagedAlpha = 1f;
+                }
+                else if (targetSecondary > _lastTargetSecondary)
+                {
+                    bool isHealAnimating = _secondaryTemp < _lastTargetSecondary && _secondaryHealTimer <= 0;
+                    if (!isHealAnimating)
+                    {
+                        _secondaryHealTimer = cfg.JobRingAnimationDelay;
+                    }
+                    _secondaryTemp = Math.Min(_secondaryTemp, _lastTargetSecondary);
                 }
                 _lastTargetSecondary = targetSecondary;
             }
 
-            // Interpolation and animation step
+            // Update animation timers and interpolation steps (mirrors UpdateHpAnimations)
             float dt = KingdomHeartsPlugin.UiSpeed;
             if (cfg.JobRingAnimationEnabled)
             {
-                // Exact speed per second (e.g. 50% / sec)
-                float step = (cfg.JobRingAnimationSpeed / 100f) * dt; 
-                step = Math.Max(step, 0.0001f);
+                float linearStep = (cfg.JobRingAnimationSpeed * 0.015f) * dt;
+                linearStep = Math.Max(linearStep, 0.001f);
 
-                // Primary main bar interpolation (animates immediately towards target)
-                if (_smoothPrimaryPercent < targetPrimary)
-                    _smoothPrimaryPercent = MathF.Min(_smoothPrimaryPercent + step, targetPrimary);
-                else if (_smoothPrimaryPercent > targetPrimary)
-                    _smoothPrimaryPercent = MathF.Max(_smoothPrimaryPercent - step, targetPrimary);
+                // Sanity clamp bounds
+                if (_primaryTemp > targetPrimary) _primaryTemp = targetPrimary;
+                if (_primaryBeforeSpent < targetPrimary) _primaryBeforeSpent = targetPrimary;
 
-                // Primary damage trail (waits out delay timer, then drains to meet main bar)
-                if (_primaryAnimTimer > 0)
+                // Primary Damage Trail
+                if (_primaryDamageTimer > 0)
                 {
-                    _primaryAnimTimer -= dt;
+                    _primaryDamageTimer -= dt;
                 }
-                else if (_primaryBeforeSpent > _smoothPrimaryPercent)
+                else if (_primaryBeforeSpent > targetPrimary)
                 {
-                    _primaryBeforeSpent -= step;
-                    if (_primaryBeforeSpent < _smoothPrimaryPercent) _primaryBeforeSpent = _smoothPrimaryPercent;
-                }
-                else
-                {
-                    _primaryBeforeSpent = _smoothPrimaryPercent;
+                    _primaryBeforeSpent -= linearStep;
+                    if (_primaryBeforeSpent < targetPrimary) _primaryBeforeSpent = targetPrimary;
                 }
 
-                // Secondary gauge interpolation & damage trail (if present)
+                // Primary Restored / Fill Animation
+                if (_primaryHealTimer > 0)
+                {
+                    _primaryHealTimer -= dt;
+                }
+                else if (_primaryTemp < targetPrimary)
+                {
+                    _primaryTemp += linearStep;
+                    if (_primaryTemp > targetPrimary) _primaryTemp = targetPrimary;
+                }
+
+                // Primary Damaged Alpha decay
+                if (_primaryBeforeSpent > targetPrimary)
+                {
+                    _primaryDamagedAlpha = 1f;
+                }
+                else if (_primaryDamagedAlpha > 0)
+                {
+                    _primaryDamagedAlpha -= 1.5f * dt;
+                    if (_primaryDamagedAlpha < 0) _primaryDamagedAlpha = 0f;
+                }
+
+                // Secondary gauge animations (if present)
                 if (showSecondary)
                 {
-                    if (_smoothSecondaryPercent < targetSecondary)
-                        _smoothSecondaryPercent = MathF.Min(_smoothSecondaryPercent + step, targetSecondary);
-                    else if (_smoothSecondaryPercent > targetSecondary)
-                        _smoothSecondaryPercent = MathF.Max(_smoothSecondaryPercent - step, targetSecondary);
+                    if (_secondaryTemp > targetSecondary) _secondaryTemp = targetSecondary;
+                    if (_secondaryBeforeSpent < targetSecondary) _secondaryBeforeSpent = targetSecondary;
 
-                    if (_secondaryAnimTimer > 0)
+                    if (_secondaryDamageTimer > 0)
                     {
-                        _secondaryAnimTimer -= dt;
+                        _secondaryDamageTimer -= dt;
                     }
-                    else if (_secondaryBeforeSpent > _smoothSecondaryPercent)
+                    else if (_secondaryBeforeSpent > targetSecondary)
                     {
-                        _secondaryBeforeSpent -= step;
-                        if (_secondaryBeforeSpent < _smoothSecondaryPercent) _secondaryBeforeSpent = _smoothSecondaryPercent;
+                        _secondaryBeforeSpent -= linearStep;
+                        if (_secondaryBeforeSpent < targetSecondary) _secondaryBeforeSpent = targetSecondary;
                     }
-                    else
+
+                    if (_secondaryHealTimer > 0)
                     {
-                        _secondaryBeforeSpent = _smoothSecondaryPercent;
+                        _secondaryHealTimer -= dt;
+                    }
+                    else if (_secondaryTemp < targetSecondary)
+                    {
+                        _secondaryTemp += linearStep;
+                        if (_secondaryTemp > targetSecondary) _secondaryTemp = targetSecondary;
+                    }
+
+                    if (_secondaryBeforeSpent > targetSecondary)
+                    {
+                        _secondaryDamagedAlpha = 1f;
+                    }
+                    else if (_secondaryDamagedAlpha > 0)
+                    {
+                        _secondaryDamagedAlpha -= 1.5f * dt;
+                        if (_secondaryDamagedAlpha < 0) _secondaryDamagedAlpha = 0f;
                     }
                 }
             }
             else
             {
-                _smoothPrimaryPercent = targetPrimary;
-                _smoothSecondaryPercent = targetSecondary;
+                _primaryTemp = targetPrimary;
                 _primaryBeforeSpent = targetPrimary;
+                _primaryDamagedAlpha = 0f;
+
+                _secondaryTemp = targetSecondary;
                 _secondaryBeforeSpent = targetSecondary;
+                _secondaryDamagedAlpha = 0f;
             }
 
             // Dynamic Arc Geometry (270° when wrap fully enabled, or custom angle)
@@ -282,36 +358,55 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
             drawList.PathArcTo(centre, radius, startAng, startAng + maxAng, 64);
             drawList.PathStroke(bgCol, ImDrawFlags.None, width);
 
-            // Damage trail – primary
-            if (cfg.JobRingShowDamageTrail && _primaryBeforeSpent > _smoothPrimaryPercent)
+            // Damage trail – primary (red loss arc with alpha fade)
+            if (cfg.JobRingShowDamageTrail && _primaryDamagedAlpha > 0 && _primaryBeforeSpent > targetPrimary)
             {
                 float trailAng = startAng + (maxAng * _primaryBeforeSpent);
                 drawList.PathArcTo(centre, radius, startAng, trailAng, 64);
-                uint trailCol = ImGui.GetColorU32(new Vector4(1f, 0f, 0f, 0.6f));
+                uint trailCol = ImGui.GetColorU32(new Vector4(1f, 0f, 0f, 0.6f * _primaryDamagedAlpha));
                 drawList.PathStroke(trailCol, ImDrawFlags.None, width);
             }
 
-            // Primary fill (smooth)
-            if (_smoothPrimaryPercent > 0)
+            // Primary restored fill (brightened/cyan recovery arc behind current fill)
+            if (_primaryTemp < targetPrimary)
             {
-                float primAng = startAng + (maxAng * _smoothPrimaryPercent);
+                float restoredAng = startAng + (maxAng * targetPrimary);
+                drawList.PathArcTo(centre, radius, startAng, restoredAng, 64);
+                uint restoredCol = ImGui.GetColorU32(new Vector4(0.4f, 0.8f, 1f, 0.8f));
+                drawList.PathStroke(restoredCol, ImDrawFlags.None, width);
+            }
+
+            // Primary main fill (animates up to _primaryTemp)
+            if (_primaryTemp > 0)
+            {
+                float primAng = startAng + (maxAng * _primaryTemp);
                 drawList.PathArcTo(centre, radius, startAng, primAng, 64);
                 drawList.PathStroke(ImGui.GetColorU32(new Vector4(primaryColor, 1f)), ImDrawFlags.None, width);
             }
 
             // Damage trail – secondary
-            if (showSecondary && cfg.JobRingShowDamageTrail && _secondaryBeforeSpent > _smoothSecondaryPercent)
+            if (showSecondary && cfg.JobRingShowDamageTrail && _secondaryDamagedAlpha > 0 && _secondaryBeforeSpent > targetSecondary)
             {
                 float trailAng = startAng + (maxAng * _secondaryBeforeSpent);
                 drawList.PathArcTo(centre, radius, startAng, trailAng, 64);
-                uint trailCol = ImGui.GetColorU32(new Vector4(0.8f, 0.2f, 0.8f, 0.6f));
+                uint trailCol = ImGui.GetColorU32(new Vector4(0.8f, 0.2f, 0.8f, 0.6f * _secondaryDamagedAlpha));
                 drawList.PathStroke(trailCol, ImDrawFlags.None, width);
             }
 
-            // Secondary fill (thinner overlay)
-            if (showSecondary && _smoothSecondaryPercent > 0)
+            // Secondary restored fill
+            if (showSecondary && _secondaryTemp < targetSecondary)
             {
-                float secAng = startAng + (maxAng * _smoothSecondaryPercent);
+                float restoredAng = startAng + (maxAng * targetSecondary);
+                float secWidth = width * 0.6f;
+                drawList.PathArcTo(centre, radius, startAng, restoredAng, 64);
+                uint restoredCol = ImGui.GetColorU32(new Vector4(0.4f, 0.8f, 1f, 0.8f));
+                drawList.PathStroke(restoredCol, ImDrawFlags.None, secWidth);
+            }
+
+            // Secondary main fill (thinner overlay)
+            if (showSecondary && _secondaryTemp > 0)
+            {
+                float secAng = startAng + (maxAng * _secondaryTemp);
                 float secWidth = width * 0.6f;
                 drawList.PathArcTo(centre, radius, startAng, secAng, 64);
                 drawList.PathStroke(ImGui.GetColorU32(new Vector4(secondaryColor, 1f)), ImDrawFlags.None, secWidth);
@@ -324,10 +419,12 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
                 drawList.PathStroke(outlineCol, ImDrawFlags.None, thickness);
                 drawList.PathArcTo(centre, outerRadius, startAng, startAng + maxAng, 64);
                 drawList.PathStroke(outlineCol, ImDrawFlags.None, thickness);
-                // caps
+
+                // Caps
                 Vector2 startInner = centre + new Vector2((float)Math.Cos(startAng), (float)Math.Sin(startAng)) * innerRadius;
                 Vector2 startOuter = centre + new Vector2((float)Math.Cos(startAng), (float)Math.Sin(startAng)) * outerRadius;
                 drawList.AddLine(startInner, startOuter, outlineCol, thickness);
+
                 float endAng = startAng + maxAng;
                 Vector2 endInner = centre + new Vector2((float)Math.Cos(endAng), (float)Math.Sin(endAng)) * innerRadius;
                 Vector2 endOuter = centre + new Vector2((float)Math.Cos(endAng), (float)Math.Sin(endAng)) * outerRadius;
