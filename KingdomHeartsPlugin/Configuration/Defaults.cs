@@ -196,6 +196,9 @@ namespace KingdomHeartsPlugin.Configuration
         public const float JobRingSecondaryOutlineThickness = 3.0f;
         public const bool JobRingSecondaryShowSegments = true;
 
+        public static readonly Vector4 JobRingPrimaryColor = new(1f, 1f, 1f, 1f);
+        public static readonly Vector4 JobRingSecondaryColor = new(1f, 1f, 1f, 1f);
+
         #endregion
 
         #region Experience

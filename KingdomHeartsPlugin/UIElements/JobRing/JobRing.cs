@@ -188,6 +188,16 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
                     break;
             }
 
+            // Job settings overrides
+            bool useOverride = cfg.PerJobRingSettings.TryGetValue((uint)jobId, out var jobCfg) && jobCfg.UseCustomSettings;
+
+            // Apply custom per-job colors if configured
+            if (useOverride && jobCfg.UseCustomColors)
+            {
+                primaryColor = new Vector3(jobCfg.PrimaryColor.X, jobCfg.PrimaryColor.Y, jobCfg.PrimaryColor.Z);
+                secondaryColor = new Vector3(jobCfg.SecondaryColor.X, jobCfg.SecondaryColor.Y, jobCfg.SecondaryColor.Z);
+            }
+
             // Clamp
             targetPrimary = Math.Clamp(targetPrimary, 0f, 1f);
             targetSecondary = Math.Clamp(targetSecondary, 0f, 1f);
@@ -362,9 +372,6 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
 
             float size = 256f * newScale;
             Vector2 centre = drawPos + new Vector2(size / 2f, size / 2f);
-
-            // Job settings overrides
-            bool useOverride = cfg.PerJobRingSettings.TryGetValue((uint)jobId, out var jobCfg) && jobCfg.UseCustomSettings;
 
             // Disable window clipping (fix top‑left cut‑off)
             drawList.PushClipRect(new Vector2(-8192.0f, -8192.0f), new Vector2(8192.0f, 8192.0f), false);

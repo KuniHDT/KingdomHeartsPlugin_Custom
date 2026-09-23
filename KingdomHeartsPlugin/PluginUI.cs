@@ -726,7 +726,11 @@ namespace KingdomHeartsPlugin
             
             if (!Configuration.PerJobRingSettings.ContainsKey(_selectedJobId))
             {
-                Configuration.PerJobRingSettings[_selectedJobId] = new JobRingConfig();
+                Configuration.PerJobRingSettings[_selectedJobId] = new JobRingConfig
+                {
+                    PrimaryColor = JobRingConfig.GetDefaultPrimaryColor(_selectedJobId),
+                    SecondaryColor = JobRingConfig.GetDefaultSecondaryColor(_selectedJobId)
+                };
             }
             
             var jobCfg = Configuration.PerJobRingSettings[_selectedJobId];
@@ -736,6 +740,23 @@ namespace KingdomHeartsPlugin
             if (jobCfg.UseCustomSettings)
             {
                 ImGui.Indent();
+
+                // Custom Job Colors
+                var useCustomColors = jobCfg.UseCustomColors;
+                if (ImGui.Checkbox($"Use Custom Colors##CustomColors{_selectedJobId}", ref useCustomColors)) jobCfg.UseCustomColors = useCustomColors;
+
+                if (jobCfg.UseCustomColors)
+                {
+                    ImGui.Indent();
+                    var primaryCol = jobCfg.PrimaryColor;
+                    if (ImGui.ColorEdit4($"Primary Color##CustomPrimColor{_selectedJobId}", ref primaryCol)) jobCfg.PrimaryColor = primaryCol;
+
+                    var secondaryCol = jobCfg.SecondaryColor;
+                    if (ImGui.ColorEdit4($"Secondary Color##CustomSecColor{_selectedJobId}", ref secondaryCol)) jobCfg.SecondaryColor = secondaryCol;
+                    ImGui.Unindent();
+                }
+
+                ImGui.Spacing();
                 
                 var customWrapFull = jobCfg.JobRingWrapFull;
                 if (ImGui.Checkbox($"Wrap Fully##Custom{_selectedJobId}", ref customWrapFull)) jobCfg.JobRingWrapFull = customWrapFull;
@@ -901,38 +922,81 @@ namespace KingdomHeartsPlugin
                 Portrait.SetPortraitHurt(path);
             }, supportedImages);
 
-            DrawPortraitPathInput("Danger", Configuration.PortraitDangerImage, path =>
-            {
-                Configuration.PortraitDangerImage = path;
-                Portrait.SetPortraitDanger(path);
-            }, supportedImages);
-
-            DrawPortraitPathInput("Combat", Configuration.PortraitCombatImage, path =>
-            {
-                Configuration.PortraitCombatImage = path;
-                Portrait.SetPortraitCombat(path);
-            }, supportedImages);
-
             ImGui.EndTabItem();
         }
 
-        private void SoundSettings()
+        private static void SectionHeader(string text)
         {
-            if (!ImGui.BeginTabItem("Sound")) return;
-            ImGui.Spacing();
-            ImGui.TextColored(new Vector4(1, 0.5f, 0, 1), "Notice:");
-            ImGui.TextWrapped("This feature has been migrated to a dedicated plugin called 'Audible Character Status'.");
-            ImGui.EndTabItem();
+            ImGui.TextColored(new Vector4(1.0f, 0.8f, 0.2f, 1.0f), text);
+            ImGui.Separator();
+        }
+
+        private static void HoverTooltip(string text)
+        {
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(text);
+            }
+        }
+
+        private static T DrawEnumCombo<T>(string label, T currentValue, Func<T, string>? nameFormatter = null) where T : struct, Enum
+        {
+            var values = Enum.GetValues<T>();
+            string currentName = nameFormatter != null ? nameFormatter(currentValue) : currentValue.ToString();
+
+            if (ImGui.BeginCombo(label, currentName))
+            {
+                foreach (var val in values)
+                {
+                    bool isSelected = EqualityComparer<T>.Default.Equals(currentValue, val);
+                    string name = nameFormatter != null ? nameFormatter(val) : val.ToString();
+                    if (ImGui.Selectable(name, isSelected))
+                    {
+                        currentValue = val;
+                    }
+                    if (isSelected)
+                    {
+                        ImGui.SetItemDefaultFocus();
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            return currentValue;
+        }
+
+        private void DrawPortraitPathInput(string label, string currentPath, Action<string> onPathChanged, string filter)
+        {
+            string tempPath = currentPath ?? string.Empty;
+            if (ImGui.InputText($"{label} Image Path", ref tempPath, 260))
+            {
+                onPathChanged(tempPath);
+            }
+            ImGui.SameLine();
+            if (ImGui.Button($"Browse##{label}"))
+            {
+                _dialogManager.OpenFileDialog($"Select {label} Image", filter, (selected, path) =>
+                {
+                    if (selected && !string.IsNullOrEmpty(path))
+                    {
+                        onPathChanged(path);
+                    }
+                });
+            }
+        }
+
+        private FileDialogManager SetupDialogManager()
+        {
+            return new FileDialogManager();
         }
 
         public void DrawSettingsWindow()
         {
             if (!SettingsVisible) return;
 
-            ImGui.SetNextWindowSize(new Vector2(650, 600), ImGuiCond.FirstUseEver);
-            if (ImGui.Begin("Kingdom Hearts Bars Configuration", ref settingsVisible, ImGuiWindowFlags.NoCollapse))
+            ImGui.SetNextWindowSize(new Vector2(550, 600), ImGuiCond.FirstUseEver);
+            if (ImGui.Begin("Kingdom Hearts HUD Settings", ref settingsVisible))
             {
-                if (ImGui.BeginTabBar("KhTabBar"))
+                if (ImGui.BeginTabBar("SettingsTabBar"))
                 {
                     GeneralSettings();
                     HealthSettings();
@@ -941,105 +1005,22 @@ namespace KingdomHeartsPlugin
                     JobRingSettings();
                     ClassSettings();
                     PortraitSettings();
-                    SoundSettings();
                     ImGui.EndTabBar();
                 }
 
-                _dialogManager.Draw();
+                ImGui.Spacing();
                 ImGui.Separator();
-                
-                if (ImGui.Button("Save Configuration", new Vector2(150, 0)))
+                ImGui.Spacing();
+
+                if (ImGui.Button("Save & Close"))
                 {
                     Configuration.Save();
+                    SettingsVisible = false;
                 }
             }
             ImGui.End();
-        }
 
-        // --- Helper Methods ---
-
-        private void SectionHeader(string title)
-        {
-            ImGui.PushFont(Dalamud.Interface.UiBuilder.IconFont);
-            // Bullet icon for slight emphasis if desired, or skip it.
-            ImGui.PopFont();
-            ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1f), title);
-            ImGui.Separator();
-            ImGui.Spacing();
-        }
-
-        private void HoverTooltip(string message)
-        {
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip(message);
-            }
-        }
-
-        private T DrawEnumCombo<T>(string label, T currentValue, Func<T, string>? formatDisplay = null) where T : Enum
-        {
-            T result = currentValue;
-            string displayValue = formatDisplay != null ? formatDisplay(result) : result.ToString();
-            
-            if (ImGui.BeginCombo(label, displayValue))
-            {
-                foreach (T val in Enum.GetValues(typeof(T)))
-                {
-                    bool isSelected = val.Equals(currentValue);
-                    string optionText = formatDisplay != null ? formatDisplay(val) : val.ToString();
-                    
-                    if (ImGui.Selectable(optionText, isSelected))
-                    {
-                        result = val;
-                    }
-                    if (isSelected) ImGui.SetItemDefaultFocus();
-                }
-                ImGui.EndCombo();
-            }
-            return result;
-        }
-
-        private void DrawPortraitPathInput(string label, string currentPath, Action<string> updateAction, string supportedExtensions)
-        {
-            ImGui.Text($"{label} Portrait");
-            ImGui.SameLine();
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), FindImageMessage(currentPath));
-
-            // Assign to a local variable to satisfy ImGui.InputText's ref requirement safely
-            string tempPath = currentPath ?? string.Empty;
-            ImGui.InputText($"##{label}Input", ref tempPath, 512, ImGuiInputTextFlags.ReadOnly);
-            ImGui.SameLine();
-
-            if (ImGui.Button($"Browse...##{label}Browse"))
-            {
-                var startDir = string.IsNullOrEmpty(currentPath) ? string.Empty : Path.GetDirectoryName(currentPath);
-                void UpdatePath(bool success, List<string> paths)
-                {
-                    if (success && paths.Count > 0)
-                    {
-                        updateAction(paths[0]);
-                    }
-                }
-                _dialogManager.OpenFileDialog($"Choose an image file for {label} Portrait", supportedExtensions, UpdatePath, 1, startDir);
-            }
-        }
-
-        private string FindImageMessage(string path)
-        {
-            if (path.IsNullOrEmpty()) return "";
-            if (!File.Exists(path)) return "File not found.";
-
-            string[] supportedImages = { ".png", ".jpg", ".jpeg", ".bmp" };
-            return supportedImages.Any(ext => Path.GetExtension(path).Equals(ext, StringComparison.OrdinalIgnoreCase)) 
-                ? "" 
-                : "Unsupported format (use png, jpg, jpeg, bmp).";
-        }
-
-        private FileDialogManager SetupDialogManager()
-        {
-            var fileManager = new FileDialogManager { AddedWindowFlags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking };
-            fileManager.CustomSideBarItems.Add(("Videos", string.Empty, 0, -1));
-            return fileManager;
+            _dialogManager.Draw();
         }
     }
 }

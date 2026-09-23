@@ -24,6 +24,51 @@ namespace KingdomHeartsPlugin.Configuration
         public float JobRingSecondaryWidth { get; set; } = Defaults.JobRingSecondaryWidth;
         public float JobRingSecondaryStartAngle { get; set; } = Defaults.JobRingSecondaryStartAngle;
         public float JobRingSecondaryOutlineThickness { get; set; } = Defaults.JobRingSecondaryOutlineThickness;
+
+        // Custom Job Colors
+        public bool UseCustomColors { get; set; } = false;
+        public Vector4 PrimaryColor { get; set; } = Defaults.JobRingPrimaryColor;
+        public Vector4 SecondaryColor { get; set; } = Defaults.JobRingSecondaryColor;
+
+        public static Vector4 GetDefaultPrimaryColor(uint jobId)
+        {
+            return jobId switch
+            {
+                19 => new Vector4(1.0f, 0.9f, 0.5f, 1.0f), // PLD
+                21 => new Vector4(0.9f, 0.2f, 0.1f, 1.0f), // WAR
+                32 => new Vector4(0.8f, 0.1f, 0.1f, 1.0f), // DRK
+                37 => new Vector4(0.7f, 0.8f, 0.9f, 1.0f), // GNB
+                24 => new Vector4(0.6f, 0.8f, 1.0f, 1.0f), // WHM
+                28 => new Vector4(0.4f, 0.9f, 0.6f, 1.0f), // SCH
+                40 => new Vector4(0.4f, 0.8f, 0.9f, 1.0f), // SGE
+                20 => new Vector4(0.9f, 0.8f, 0.3f, 1.0f), // MNK
+                22 => new Vector4(0.2f, 0.6f, 0.9f, 1.0f), // DRG
+                30 => new Vector4(0.8f, 0.2f, 0.3f, 1.0f), // NIN
+                34 => new Vector4(0.9f, 0.4f, 0.1f, 1.0f), // SAM
+                39 => new Vector4(0.8f, 0.1f, 0.3f, 1.0f), // RPR
+                41 => new Vector4(0.3f, 0.8f, 0.3f, 1.0f), // VPR
+                23 => new Vector4(0.5f, 0.8f, 0.7f, 1.0f), // BRD
+                31 => new Vector4(0.9f, 0.3f, 0.1f, 1.0f), // MCH
+                38 => new Vector4(0.9f, 0.7f, 0.8f, 1.0f), // DNC
+                25 => new Vector4(0.7f, 0.3f, 0.9f, 1.0f), // BLM
+                35 => new Vector4(0.9f, 0.9f, 0.9f, 1.0f), // RDM
+                42 => new Vector4(0.9f, 0.5f, 0.8f, 1.0f), // PCT
+                _  => new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
+            };
+        }
+
+        public static Vector4 GetDefaultSecondaryColor(uint jobId)
+        {
+            return jobId switch
+            {
+                24 => new Vector4(0.9f, 0.2f, 0.2f, 1.0f), // WHM
+                34 => new Vector4(0.9f, 0.2f, 0.2f, 1.0f), // SAM
+                39 => new Vector4(0.9f, 0.2f, 0.2f, 1.0f), // RPR
+                38 => new Vector4(0.3f, 0.8f, 0.3f, 1.0f), // DNC
+                35 => new Vector4(0.4f, 0.4f, 0.9f, 1.0f), // RDM
+                _  => new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
+            };
+        }
     }
 
     [Serializable]
