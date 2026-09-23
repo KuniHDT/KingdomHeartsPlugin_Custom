@@ -22,6 +22,16 @@ namespace KingdomHeartsPlugin
         public readonly HealthFrame HealthFrame;
         private readonly FileDialogManager _dialogManager;
 
+        private uint _selectedJobId = 19;
+        private static readonly Dictionary<uint, string> JobNames = new()
+        {
+            { 19, "Paladin (PLD)" }, { 21, "Warrior (WAR)" }, { 32, "Dark Knight (DRK)" }, { 37, "Gunbreaker (GNB)" },
+            { 24, "White Mage (WHM)" }, { 28, "Scholar (SCH)" }, { 33, "Astrologian (AST)" }, { 40, "Sage (SGE)" },
+            { 20, "Monk (MNK)" }, { 22, "Dragoon (DRG)" }, { 30, "Ninja (NIN)" }, { 34, "Samurai (SAM)" }, { 39, "Reaper (RPR)" }, { 41, "Viper (VPR)" },
+            { 23, "Bard (BRD)" }, { 31, "Machinist (MCH)" }, { 38, "Dancer (DNC)" },
+            { 25, "Black Mage (BLM)" }, { 27, "Summoner (SMN)" }, { 35, "Red Mage (RDM)" }, { 42, "Pictomancer (PCT)" }
+        };
+
         private bool visible = true;
         public bool Visible
         {
@@ -622,18 +632,18 @@ namespace KingdomHeartsPlugin
             }
 
             ImGui.Spacing();
-            SectionHeader("Vector Outline, Arc & Segments");
+            SectionHeader("Primary Ring (Base Vector Outline & Arc)");
 
             var wrapFull = Configuration.JobRingWrapFull;
             if (ImGui.Checkbox("Wrap Fully Around Health Ring", ref wrapFull)) Configuration.JobRingWrapFull = wrapFull;
-            HoverTooltip("When enabled, the Job Ring arc spans the full 270-degree length of the health ring.");
+            HoverTooltip("When enabled, the primary Job Ring arc spans the full 270-degree length of the health ring.");
 
             if (!Configuration.JobRingWrapFull)
             {
                 ImGui.Indent();
                 var maxAngle = Configuration.JobRingMaxAngle;
                 if (ImGui.SliderFloat("Custom Wrap Angle (Degrees)", ref maxAngle, 10f, 360f, "%.1f")) Configuration.JobRingMaxAngle = maxAngle;
-                HoverTooltip("Custom arc length in degrees over which the Job Ring and its segments scale.");
+                HoverTooltip("Custom arc length in degrees over which the primary Job Ring and its segments scale.");
                 ImGui.Unindent();
             }
 
@@ -647,15 +657,46 @@ namespace KingdomHeartsPlugin
 
             var radius = Configuration.JobRingRadius;
             if (ImGui.SliderFloat("Ring Radius", ref radius, 10f, 200f, "%.1f")) Configuration.JobRingRadius = radius;
-            HoverTooltip("Adjust to match the colored texture's radius.");
+            HoverTooltip("Adjust the primary ring radius.");
 
             var width = Configuration.JobRingWidth;
             if (ImGui.SliderFloat("Ring Width", ref width, 1f, 100f, "%.1f")) Configuration.JobRingWidth = width;
-            HoverTooltip("Adjust to match the colored texture's thickness.");
+            HoverTooltip("Adjust the primary ring thickness.");
 
             var startAngle = Configuration.JobRingStartAngle;
             if (ImGui.SliderFloat("Start Angle", ref startAngle, 0f, 360f, "%.1f")) Configuration.JobRingStartAngle = startAngle;
-            HoverTooltip("Starting angle of the ring (180 = Left/9 o'clock).");
+            HoverTooltip("Starting angle of the primary ring (180 = Left/9 o'clock).");
+
+            ImGui.Spacing();
+            SectionHeader("Secondary Outer Ring (Dual-Gauge Jobs: WHM & RDM)");
+
+            var secRadius = Configuration.JobRingSecondaryRadius;
+            if (ImGui.SliderFloat("Secondary Ring Radius", ref secRadius, 10f, 250f, "%.1f")) Configuration.JobRingSecondaryRadius = secRadius;
+            HoverTooltip("Radius of the outer secondary ring (e.g. Blood Lily / Black Mana). Set larger than primary radius to wrap outside.");
+
+            var secWidth = Configuration.JobRingSecondaryWidth;
+            if (ImGui.SliderFloat("Secondary Ring Width", ref secWidth, 1f, 100f, "%.1f")) Configuration.JobRingSecondaryWidth = secWidth;
+            HoverTooltip("Width of the outer secondary ring.");
+
+            var secStartAngle = Configuration.JobRingSecondaryStartAngle;
+            if (ImGui.SliderFloat("Secondary Start Angle", ref secStartAngle, 0f, 360f, "%.1f")) Configuration.JobRingSecondaryStartAngle = secStartAngle;
+
+            var secWrapFull = Configuration.JobRingSecondaryWrapFull;
+            if (ImGui.Checkbox("Secondary Wrap Fully Around Health Ring", ref secWrapFull)) Configuration.JobRingSecondaryWrapFull = secWrapFull;
+
+            if (!Configuration.JobRingSecondaryWrapFull)
+            {
+                ImGui.Indent();
+                var secMaxAngle = Configuration.JobRingSecondaryMaxAngle;
+                if (ImGui.SliderFloat("Secondary Custom Wrap Angle (Degrees)", ref secMaxAngle, 10f, 360f, "%.1f")) Configuration.JobRingSecondaryMaxAngle = secMaxAngle;
+                ImGui.Unindent();
+            }
+
+            var secShowSegments = Configuration.JobRingSecondaryShowSegments;
+            if (ImGui.Checkbox("Show Secondary Segments", ref secShowSegments)) Configuration.JobRingSecondaryShowSegments = secShowSegments;
+
+            var secOutlineThickness = Configuration.JobRingSecondaryOutlineThickness;
+            if (ImGui.SliderFloat("Secondary Outline Thickness", ref secOutlineThickness, 0f, 10f, "%.1f")) Configuration.JobRingSecondaryOutlineThickness = secOutlineThickness;
 
             ImGui.Spacing();
             SectionHeader("Animation");
@@ -667,6 +708,82 @@ namespace KingdomHeartsPlugin
             if (ImGui.SliderFloat("Animation Delay (s)##JobRing", ref animDelay, 0f, 3f)) Configuration.JobRingAnimationDelay = animDelay;
             var trail = Configuration.JobRingShowDamageTrail;
             if (ImGui.Checkbox("Show Damage Trail", ref trail)) Configuration.JobRingShowDamageTrail = trail;
+            
+            ImGui.Spacing();
+            SectionHeader("Per-Job Customizations");
+            
+            if (ImGui.BeginCombo("Select Job", JobNames.ContainsKey(_selectedJobId) ? JobNames[_selectedJobId] : "Unknown"))
+            {
+                foreach (var kvp in JobNames)
+                {
+                    if (ImGui.Selectable(kvp.Value, _selectedJobId == kvp.Key))
+                    {
+                        _selectedJobId = kvp.Key;
+                    }
+                }
+                ImGui.EndCombo();
+            }
+            
+            if (!Configuration.PerJobRingSettings.ContainsKey(_selectedJobId))
+            {
+                Configuration.PerJobRingSettings[_selectedJobId] = new JobRingConfig();
+            }
+            
+            var jobCfg = Configuration.PerJobRingSettings[_selectedJobId];
+            var useCustom = jobCfg.UseCustomSettings;
+            if (ImGui.Checkbox($"Use Custom Settings for {JobNames[_selectedJobId]}", ref useCustom)) jobCfg.UseCustomSettings = useCustom;
+            
+            if (jobCfg.UseCustomSettings)
+            {
+                ImGui.Indent();
+                
+                var customWrapFull = jobCfg.JobRingWrapFull;
+                if (ImGui.Checkbox($"Wrap Fully##Custom{_selectedJobId}", ref customWrapFull)) jobCfg.JobRingWrapFull = customWrapFull;
+                
+                if (!jobCfg.JobRingWrapFull)
+                {
+                    var customMaxAngle = jobCfg.JobRingMaxAngle;
+                    if (ImGui.SliderFloat($"Custom Wrap Angle##Custom{_selectedJobId}", ref customMaxAngle, 10f, 360f, "%.1f")) jobCfg.JobRingMaxAngle = customMaxAngle;
+                }
+
+                var customOutline = jobCfg.JobRingOutlineThickness;
+                if (ImGui.SliderFloat($"Outline Thickness##Custom{_selectedJobId}", ref customOutline, 0f, 10f, "%.1f")) jobCfg.JobRingOutlineThickness = customOutline;
+
+                var customRadius = jobCfg.JobRingRadius;
+                if (ImGui.SliderFloat($"Ring Radius##Custom{_selectedJobId}", ref customRadius, 10f, 200f, "%.1f")) jobCfg.JobRingRadius = customRadius;
+
+                var customWidth = jobCfg.JobRingWidth;
+                if (ImGui.SliderFloat($"Ring Width##Custom{_selectedJobId}", ref customWidth, 1f, 100f, "%.1f")) jobCfg.JobRingWidth = customWidth;
+
+                var customStart = jobCfg.JobRingStartAngle;
+                if (ImGui.SliderFloat($"Start Angle##Custom{_selectedJobId}", ref customStart, 0f, 360f, "%.1f")) jobCfg.JobRingStartAngle = customStart;
+
+                ImGui.Spacing();
+                ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1f), "Secondary Ring");
+                
+                var customSecWrapFull = jobCfg.JobRingSecondaryWrapFull;
+                if (ImGui.Checkbox($"Secondary Wrap Fully##CustomSec{_selectedJobId}", ref customSecWrapFull)) jobCfg.JobRingSecondaryWrapFull = customSecWrapFull;
+
+                if (!jobCfg.JobRingSecondaryWrapFull)
+                {
+                    var customSecMaxAngle = jobCfg.JobRingSecondaryMaxAngle;
+                    if (ImGui.SliderFloat($"Secondary Custom Wrap Angle##CustomSec{_selectedJobId}", ref customSecMaxAngle, 10f, 360f, "%.1f")) jobCfg.JobRingSecondaryMaxAngle = customSecMaxAngle;
+                }
+                
+                var customSecRadius = jobCfg.JobRingSecondaryRadius;
+                if (ImGui.SliderFloat($"Secondary Ring Radius##CustomSec{_selectedJobId}", ref customSecRadius, 10f, 250f, "%.1f")) jobCfg.JobRingSecondaryRadius = customSecRadius;
+
+                var customSecWidth = jobCfg.JobRingSecondaryWidth;
+                if (ImGui.SliderFloat($"Secondary Ring Width##CustomSec{_selectedJobId}", ref customSecWidth, 1f, 100f, "%.1f")) jobCfg.JobRingSecondaryWidth = customSecWidth;
+
+                var customSecStart = jobCfg.JobRingSecondaryStartAngle;
+                if (ImGui.SliderFloat($"Secondary Start Angle##CustomSec{_selectedJobId}", ref customSecStart, 0f, 360f, "%.1f")) jobCfg.JobRingSecondaryStartAngle = customSecStart;
+                
+                var customSecOutline = jobCfg.JobRingSecondaryOutlineThickness;
+                if (ImGui.SliderFloat($"Secondary Outline Thickness##CustomSec{_selectedJobId}", ref customSecOutline, 0f, 10f, "%.1f")) jobCfg.JobRingSecondaryOutlineThickness = customSecOutline;
+
+                ImGui.Unindent();
+            }
 
             ImGui.EndTabItem();
         }

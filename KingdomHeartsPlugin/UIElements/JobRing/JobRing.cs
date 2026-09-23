@@ -80,12 +80,9 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
                     maxSegments = 3;
                     targetPrimary = whm.Lily / (float)maxSegments;
                     primaryColor = new Vector3(0.6f, 0.8f, 1.0f);
-                    if (whm.BloodLily > 0)
-                    {
-                        showSecondary = true;
-                        targetSecondary = whm.BloodLily / (float)maxSegments;
-                        secondaryColor = new Vector3(0.9f, 0.2f, 0.2f);
-                    }
+                    showSecondary = true;
+                    targetSecondary = whm.BloodLily / (float)maxSegments;
+                    secondaryColor = new Vector3(0.9f, 0.2f, 0.2f);
                     break;
                 case 28: // SCH
                     var sch = jg.Get<SCHGauge>();
@@ -117,13 +114,29 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
                     break;
                 case 34: // SAM
                     var sam = jg.Get<SAMGauge>();
-                    targetPrimary = sam.Kenki / 100f;
-                    primaryColor = new Vector3(0.9f, 0.4f, 0.1f);
+                    maxSegments = 3;
+                    if (sam.Kenki > 0)
+                    {
+                        targetPrimary = sam.Kenki / 100f;
+                        primaryColor = new Vector3(0.9f, 0.4f, 0.1f);
+                    }
+                    if (sam.MeditationStacks > 0)
+                    {
+                        showSecondary = true;
+                        targetSecondary = sam.MeditationStacks / (float)maxSegments;
+                        secondaryColor = new Vector3(0.9f, 0.2f, 0.2f);
+                    }
                     break;
                 case 39: // RPR
                     var rpr = jg.Get<RPRGauge>();
                     targetPrimary = rpr.Soul / 100f;
                     primaryColor = new Vector3(0.8f, 0.1f, 0.3f);
+                    if (rpr.Shroud > 0)
+                    {
+                        showSecondary = true;
+                        targetSecondary = rpr.Shroud / 100f;
+                        secondaryColor = new Vector3(0.9f, 0.2f, 0.2f);
+                    }
                     break;
                 case 41: // VPR
                     var vpr = jg.Get<VPRGauge>();
@@ -144,6 +157,13 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
                     var dnc = jg.Get<DNCGauge>();
                     targetPrimary = dnc.Esprit / 100f;
                     primaryColor = new Vector3(0.9f, 0.7f, 0.8f);
+                    if (dnc.Feathers > 0)
+                    {
+                        showSecondary = true;
+                        maxSegments = 4;
+                        targetSecondary = dnc.Feathers / (float)maxSegments;
+                        secondaryColor = new Vector3(0.3f, 0.8f, 0.3f);
+                    }
                     break;
                 case 25: // BLM (segmented)
                     var blm = jg.Get<BLMGauge>();
@@ -335,84 +355,141 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
                 _secondaryDamagedAlpha = 0f;
             }
 
-            // Dynamic Arc Geometry (270° when wrap fully enabled, or custom angle)
-            float startAng = cfg.JobRingStartAngle * (float)Math.PI / 180f;
-            float maxAngDeg = cfg.JobRingWrapFull ? 270f : cfg.JobRingMaxAngle;
-            float maxAng = maxAngDeg * (float)Math.PI / 180f;
+            // Colors & Common Geometry Constants
+            uint outlineCol = ImGui.GetColorU32(new Vector4(0, 0, 0, 1));
+            // Completely dark and not transparent
+            uint bgCol = ImGui.GetColorU32(new Vector4(0.2f, 0.2f, 0.2f, 1f));
 
-            float thickness = cfg.JobRingOutlineThickness * newScale;
-            float radius = cfg.JobRingRadius * newScale;
-            float width = cfg.JobRingWidth * newScale;
-            float innerRadius = radius - width / 2f;
-            float outerRadius = radius + width / 2f;
             float size = 256f * newScale;
             Vector2 centre = drawPos + new Vector2(size / 2f, size / 2f);
 
-            uint outlineCol = ImGui.GetColorU32(new Vector4(0, 0, 0, 1));
-            uint bgCol = ImGui.GetColorU32(new Vector4(0.07843f, 0.07843f, 0.0745f, 0.5f));
+            // Job settings overrides
+            bool useOverride = cfg.PerJobRingSettings.TryGetValue((uint)jobId, out var jobCfg) && jobCfg.UseCustomSettings;
 
             // Disable window clipping (fix top‑left cut‑off)
             drawList.PushClipRect(new Vector2(-8192.0f, -8192.0f), new Vector2(8192.0f, 8192.0f), false);
 
-            // Background ring
+            // -------------------------------------------------------------------------
+            // 1. SECONDARY OUTER RING DRAWING (Dual-Gauge Jobs: WHM & RDM)
+            // (Drawn first so it renders beneath the primary ring on the Z-axis)
+            // -------------------------------------------------------------------------
+            if (showSecondary)
+            {
+                float secBaseStartAng = useOverride ? jobCfg.JobRingSecondaryStartAngle : cfg.JobRingSecondaryStartAngle;
+                float secStartAng = secBaseStartAng * (float)Math.PI / 180f;
+
+                bool secBaseWrapFull = useOverride ? jobCfg.JobRingSecondaryWrapFull : cfg.JobRingSecondaryWrapFull;
+                float secBaseMaxAng = useOverride ? jobCfg.JobRingSecondaryMaxAngle : cfg.JobRingSecondaryMaxAngle;
+                float secMaxAngDeg = secBaseWrapFull ? 270f : secBaseMaxAng;
+                float secMaxAng = secMaxAngDeg * (float)Math.PI / 180f;
+
+                float secThickness = (useOverride ? jobCfg.JobRingSecondaryOutlineThickness : cfg.JobRingSecondaryOutlineThickness) * newScale;
+                float secRadius = (useOverride ? jobCfg.JobRingSecondaryRadius : cfg.JobRingSecondaryRadius) * newScale;
+                float secWidth = (useOverride ? jobCfg.JobRingSecondaryWidth : cfg.JobRingSecondaryWidth) * newScale;
+                float secInnerRadius = secRadius - secWidth / 2f;
+                float secOuterRadius = secRadius + secWidth / 2f;
+
+                // Secondary background ring (Kept flat for contrast)
+                drawList.PathArcTo(centre, secRadius, secStartAng, secStartAng + secMaxAng, 64);
+                drawList.PathStroke(bgCol, ImDrawFlags.None, secWidth);
+
+                // Secondary damage trail
+                if (cfg.JobRingShowDamageTrail && _secondaryDamagedAlpha > 0 && _secondaryBeforeSpent > targetSecondary)
+                {
+                    float trailAng = secStartAng + (secMaxAng * _secondaryBeforeSpent);
+                    DrawRingGradient(drawList, centre, secRadius, secWidth, secStartAng, trailAng, new Vector3(0.8f, 0.2f, 0.8f), 0.6f * _secondaryDamagedAlpha);
+                }
+
+                // Secondary restored fill
+                if (_secondaryTemp < targetSecondary)
+                {
+                    float restoredAng = secStartAng + (secMaxAng * targetSecondary);
+                    DrawRingGradient(drawList, centre, secRadius, secWidth, secStartAng, restoredAng, new Vector3(0.4f, 0.8f, 1f), 0.8f);
+                }
+
+                // Secondary main fill
+                if (_secondaryTemp > 0)
+                {
+                    float secAng = secStartAng + (secMaxAng * _secondaryTemp);
+                    DrawRingGradient(drawList, centre, secRadius, secWidth, secStartAng, secAng, secondaryColor, 1f);
+                }
+
+                // Secondary outlines, caps, and segment lines
+                if (secThickness > 0)
+                {
+                    drawList.PathArcTo(centre, secInnerRadius, secStartAng, secStartAng + secMaxAng, 64);
+                    drawList.PathStroke(outlineCol, ImDrawFlags.None, secThickness);
+                    drawList.PathArcTo(centre, secOuterRadius, secStartAng, secStartAng + secMaxAng, 64);
+                    drawList.PathStroke(outlineCol, ImDrawFlags.None, secThickness);
+
+                    // Caps
+                    Vector2 secStartInner = centre + new Vector2((float)Math.Cos(secStartAng), (float)Math.Sin(secStartAng)) * secInnerRadius;
+                    Vector2 secStartOuter = centre + new Vector2((float)Math.Cos(secStartAng), (float)Math.Sin(secStartAng)) * secOuterRadius;
+                    drawList.AddLine(secStartInner, secStartOuter, outlineCol, secThickness);
+
+                    float secEndAng = secStartAng + secMaxAng;
+                    Vector2 secEndInner = centre + new Vector2((float)Math.Cos(secEndAng), (float)Math.Sin(secEndAng)) * secInnerRadius;
+                    Vector2 secEndOuter = centre + new Vector2((float)Math.Cos(secEndAng), (float)Math.Sin(secEndAng)) * secOuterRadius;
+                    drawList.AddLine(secEndInner, secEndOuter, outlineCol, secThickness);
+
+                    if (cfg.JobRingSecondaryShowSegments && maxSegments > 1)
+                    {
+                        for (int i = 1; i < maxSegments; i++)
+                        {
+                            float segPerc = (float)i / maxSegments;
+                            float segAng = secStartAng + segPerc * secMaxAng;
+                            Vector2 segInner = centre + new Vector2((float)Math.Cos(segAng), (float)Math.Sin(segAng)) * secInnerRadius;
+                            Vector2 segOuter = centre + new Vector2((float)Math.Cos(segAng), (float)Math.Sin(segAng)) * secOuterRadius;
+                            drawList.AddLine(segInner, segOuter, outlineCol, secThickness);
+                        }
+                    }
+                }
+            }
+
+            // -------------------------------------------------------------------------
+            // 2. PRIMARY INNER RING DRAWING
+            // (Drawn last so it renders on top)
+            // -------------------------------------------------------------------------
+            float baseStartAng = useOverride ? jobCfg.JobRingStartAngle : cfg.JobRingStartAngle;
+            float startAng = baseStartAng * (float)Math.PI / 180f;
+
+            bool baseWrapFull = useOverride ? jobCfg.JobRingWrapFull : cfg.JobRingWrapFull;
+            float baseMaxAng = useOverride ? jobCfg.JobRingMaxAngle : cfg.JobRingMaxAngle;
+            float maxAngDeg = baseWrapFull ? 270f : baseMaxAng;
+            float maxAng = maxAngDeg * (float)Math.PI / 180f;
+
+            float thickness = (useOverride ? jobCfg.JobRingOutlineThickness : cfg.JobRingOutlineThickness) * newScale;
+            float radius = (useOverride ? jobCfg.JobRingRadius : cfg.JobRingRadius) * newScale;
+            float width = (useOverride ? jobCfg.JobRingWidth : cfg.JobRingWidth) * newScale;
+            float innerRadius = radius - width / 2f;
+            float outerRadius = radius + width / 2f;
+
+            // Background ring (Kept flat for contrast)
             drawList.PathArcTo(centre, radius, startAng, startAng + maxAng, 64);
             drawList.PathStroke(bgCol, ImDrawFlags.None, width);
 
-            // Damage trail – primary (red loss arc with alpha fade)
+            // Damage trail – primary
             if (cfg.JobRingShowDamageTrail && _primaryDamagedAlpha > 0 && _primaryBeforeSpent > targetPrimary)
             {
                 float trailAng = startAng + (maxAng * _primaryBeforeSpent);
-                drawList.PathArcTo(centre, radius, startAng, trailAng, 64);
-                uint trailCol = ImGui.GetColorU32(new Vector4(1f, 0f, 0f, 0.6f * _primaryDamagedAlpha));
-                drawList.PathStroke(trailCol, ImDrawFlags.None, width);
+                DrawRingGradient(drawList, centre, radius, width, startAng, trailAng, new Vector3(1f, 0f, 0f), 0.6f * _primaryDamagedAlpha);
             }
 
-            // Primary restored fill (brightened/cyan recovery arc behind current fill)
+            // Primary restored fill
             if (_primaryTemp < targetPrimary)
             {
                 float restoredAng = startAng + (maxAng * targetPrimary);
-                drawList.PathArcTo(centre, radius, startAng, restoredAng, 64);
-                uint restoredCol = ImGui.GetColorU32(new Vector4(0.4f, 0.8f, 1f, 0.8f));
-                drawList.PathStroke(restoredCol, ImDrawFlags.None, width);
+                DrawRingGradient(drawList, centre, radius, width, startAng, restoredAng, new Vector3(0.4f, 0.8f, 1f), 0.8f);
             }
 
             // Primary main fill (animates up to _primaryTemp)
             if (_primaryTemp > 0)
             {
                 float primAng = startAng + (maxAng * _primaryTemp);
-                drawList.PathArcTo(centre, radius, startAng, primAng, 64);
-                drawList.PathStroke(ImGui.GetColorU32(new Vector4(primaryColor, 1f)), ImDrawFlags.None, width);
+                DrawRingGradient(drawList, centre, radius, width, startAng, primAng, primaryColor, 1f);
             }
 
-            // Damage trail – secondary
-            if (showSecondary && cfg.JobRingShowDamageTrail && _secondaryDamagedAlpha > 0 && _secondaryBeforeSpent > targetSecondary)
-            {
-                float trailAng = startAng + (maxAng * _secondaryBeforeSpent);
-                drawList.PathArcTo(centre, radius, startAng, trailAng, 64);
-                uint trailCol = ImGui.GetColorU32(new Vector4(0.8f, 0.2f, 0.8f, 0.6f * _secondaryDamagedAlpha));
-                drawList.PathStroke(trailCol, ImDrawFlags.None, width);
-            }
-
-            // Secondary restored fill
-            if (showSecondary && _secondaryTemp < targetSecondary)
-            {
-                float restoredAng = startAng + (maxAng * targetSecondary);
-                float secWidth = width * 0.6f;
-                drawList.PathArcTo(centre, radius, startAng, restoredAng, 64);
-                uint restoredCol = ImGui.GetColorU32(new Vector4(0.4f, 0.8f, 1f, 0.8f));
-                drawList.PathStroke(restoredCol, ImDrawFlags.None, secWidth);
-            }
-
-            // Secondary main fill (thinner overlay)
-            if (showSecondary && _secondaryTemp > 0)
-            {
-                float secAng = startAng + (maxAng * _secondaryTemp);
-                float secWidth = width * 0.6f;
-                drawList.PathArcTo(centre, radius, startAng, secAng, 64);
-                drawList.PathStroke(ImGui.GetColorU32(new Vector4(secondaryColor, 1f)), ImDrawFlags.None, secWidth);
-            }
-
-            // Outlines, caps, and optional segment lines
+            // Outlines, caps, and segment lines for primary ring
             if (thickness > 0)
             {
                 drawList.PathArcTo(centre, innerRadius, startAng, startAng + maxAng, 64);
@@ -444,6 +521,59 @@ namespace KingdomHeartsPlugin.UIElements.JobRingNS
             }
 
             drawList.PopClipRect();
+        }
+        
+        /// <summary>
+        /// Draws a thick arc as a series of connected quads, dynamically applying a radial gradient from inner to outer radius.
+        /// </summary>
+        private void DrawRingGradient(ImDrawListPtr drawList, Vector2 centre, float radius, float width, float startAng, float endAng, Vector3 baseColor, float alpha)
+        {
+            if (endAng <= startAng) return;
+            
+            float innerRadius = radius - width / 2f;
+
+            // Generate an appropriate number of smoothing segments dynamically
+            int segments = (int)Math.Max(4, Math.Ceiling(64 * ((endAng - startAng) / (Math.PI * 2.0))));
+            int radialSteps = 4; // Subdivide radially to create the gradient
+
+            for (int i = 0; i < segments; i++)
+            {
+                float a0 = startAng + (endAng - startAng) * (i / (float)segments);
+                float a1 = startAng + (endAng - startAng) * ((i + 1) / (float)segments);
+                
+                // Add a very tiny overlap to the end angle to bridge hairline anti-aliasing gaps between quads
+                if (i < segments - 1) a1 += 0.015f;
+
+                for (int r = 0; r < radialSteps; r++)
+                {
+                    float r0 = innerRadius + width * (r / (float)radialSteps);
+                    float r1 = innerRadius + width * ((r + 1) / (float)radialSteps);
+                    
+                    // Add a tiny overlap to bridge radial gaps between steps
+                    if (r < radialSteps - 1) r1 += 0.5f;
+
+                    Vector2 p0_inner = centre + new Vector2((float)Math.Cos(a0) * r0, (float)Math.Sin(a0) * r0);
+                    Vector2 p0_outer = centre + new Vector2((float)Math.Cos(a0) * r1, (float)Math.Sin(a0) * r1);
+                    Vector2 p1_inner = centre + new Vector2((float)Math.Cos(a1) * r0, (float)Math.Sin(a1) * r0);
+                    Vector2 p1_outer = centre + new Vector2((float)Math.Cos(a1) * r1, (float)Math.Sin(a1) * r1);
+
+                    // Calculate the interpolation factor (0.0 = Inner, 1.0 = Outer)
+                    float t = (r + 0.5f) / radialSteps;
+                    
+                    // Dark (0.3x) at Inner, Light (1.0x) at Outer
+                    float intensity = 0.3f + 0.7f * t;
+                    Vector3 gradColor = baseColor * intensity;
+                    
+                    // Clamp just in case floating point scaling pushes it above valid ranges
+                    gradColor.X = Math.Min(1f, gradColor.X);
+                    gradColor.Y = Math.Min(1f, gradColor.Y);
+                    gradColor.Z = Math.Min(1f, gradColor.Z);
+
+                    uint col = ImGui.GetColorU32(new Vector4(gradColor, alpha));
+                    
+                    drawList.AddQuadFilled(p0_inner, p0_outer, p1_outer, p1_inner, col);
+                }
+            }
         }
 
         public void Dispose() { }

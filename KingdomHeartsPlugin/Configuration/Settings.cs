@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
@@ -6,6 +7,25 @@ using KingdomHeartsPlugin.Enums;
 
 namespace KingdomHeartsPlugin.Configuration
 {
+    [Serializable]
+    public class JobRingConfig
+    {
+        public bool UseCustomSettings { get; set; } = false;
+        public bool JobRingWrapFull { get; set; } = Defaults.JobRingWrapFull;
+        public float JobRingMaxAngle { get; set; } = Defaults.JobRingMaxAngle;
+        public float JobRingOutlineThickness { get; set; } = Defaults.JobRingOutlineThickness;
+        public float JobRingRadius { get; set; } = Defaults.JobRingRadius;
+        public float JobRingWidth { get; set; } = Defaults.JobRingWidth;
+        public float JobRingStartAngle { get; set; } = Defaults.JobRingStartAngle;
+
+        public bool JobRingSecondaryWrapFull { get; set; } = Defaults.JobRingSecondaryWrapFull;
+        public float JobRingSecondaryMaxAngle { get; set; } = Defaults.JobRingSecondaryMaxAngle;
+        public float JobRingSecondaryRadius { get; set; } = Defaults.JobRingSecondaryRadius;
+        public float JobRingSecondaryWidth { get; set; } = Defaults.JobRingSecondaryWidth;
+        public float JobRingSecondaryStartAngle { get; set; } = Defaults.JobRingSecondaryStartAngle;
+        public float JobRingSecondaryOutlineThickness { get; set; } = Defaults.JobRingSecondaryOutlineThickness;
+    }
+
     [Serializable]
     public partial class Settings : IPluginConfiguration
     {
@@ -184,6 +204,15 @@ namespace KingdomHeartsPlugin.Configuration
         public bool JobRingWrapFull { get; set; } = Defaults.JobRingWrapFull;
         public float JobRingMaxAngle { get; set; } = Defaults.JobRingMaxAngle;
 
+        // Secondary Ring Settings
+        public bool JobRingSecondaryWrapFull { get; set; } = Defaults.JobRingSecondaryWrapFull;
+        public float JobRingSecondaryMaxAngle { get; set; } = Defaults.JobRingSecondaryMaxAngle;
+        public float JobRingSecondaryRadius { get; set; } = Defaults.JobRingSecondaryRadius;
+        public float JobRingSecondaryWidth { get; set; } = Defaults.JobRingSecondaryWidth;
+        public float JobRingSecondaryStartAngle { get; set; } = Defaults.JobRingSecondaryStartAngle;
+        public float JobRingSecondaryOutlineThickness { get; set; } = Defaults.JobRingSecondaryOutlineThickness;
+        public bool JobRingSecondaryShowSegments { get; set; } = Defaults.JobRingSecondaryShowSegments;
+
         // Animation settings
         public bool JobRingAnimationEnabled { get; set; } = Defaults.JobRingAnimationEnabled;
         public float JobRingAnimationSpeed { get; set; } = Defaults.JobRingAnimationSpeed;
@@ -194,6 +223,8 @@ namespace KingdomHeartsPlugin.Configuration
         public float JobRingRadius { get; set; } = Defaults.JobRingRadius;
         public float JobRingWidth { get; set; } = Defaults.JobRingWidth;
         public float JobRingStartAngle { get; set; } = Defaults.JobRingStartAngle;
+
+        public Dictionary<uint, JobRingConfig> PerJobRingSettings { get; set; } = new();
 
         #endregion
 

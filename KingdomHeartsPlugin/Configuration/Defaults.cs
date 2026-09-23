@@ -187,6 +187,15 @@ namespace KingdomHeartsPlugin.Configuration
         public const float JobRingWidth = 28.0f;
         public const float JobRingStartAngle = 180f;
 
+        // Secondary Outer Ring Defaults
+        public const bool JobRingSecondaryWrapFull = true;
+        public const float JobRingSecondaryMaxAngle = 270f;
+        public const float JobRingSecondaryRadius = 120.0f;
+        public const float JobRingSecondaryWidth = 16.0f;
+        public const float JobRingSecondaryStartAngle = 180f;
+        public const float JobRingSecondaryOutlineThickness = 3.0f;
+        public const bool JobRingSecondaryShowSegments = true;
+
         #endregion
 
         #region Experience
