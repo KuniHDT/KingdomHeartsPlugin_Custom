@@ -601,6 +601,52 @@ namespace KingdomHeartsPlugin
             ImGui.EndTabItem();
         }
 
+        private void JobRingSettings()
+        {
+            if (!ImGui.BeginTabItem("Job Ring")) return;
+
+            var enabled = Configuration.JobRingEnabled;
+            if (ImGui.Checkbox("Enabled", ref enabled)) Configuration.JobRingEnabled = enabled;
+
+            ImGui.Spacing();
+            SectionHeader("Transform");
+
+            var scaleMult = Configuration.JobRingScaleMultiplier;
+            if (ImGui.SliderFloat("Scale Multiplier", ref scaleMult, 0.5f, 3.0f, "%.2f")) Configuration.JobRingScaleMultiplier = scaleMult;
+
+            var offset = new Vector2(Configuration.JobRingOffsetX, Configuration.JobRingOffsetY);
+            if (ImGui.DragFloat2("Offset (X, Y)", ref offset))
+            {
+                Configuration.JobRingOffsetX = offset.X;
+                Configuration.JobRingOffsetY = offset.Y;
+            }
+
+            ImGui.Spacing();
+            SectionHeader("Vector Outline & Segments");
+
+            var showSegments = Configuration.JobRingShowSegments;
+            if (ImGui.Checkbox("Show Segments", ref showSegments)) Configuration.JobRingShowSegments = showSegments;
+            HoverTooltip("Draws segment divider lines inside the ring for jobs that use stocks (like Gunbreaker or White Mage).");
+
+            var outlineThickness = Configuration.JobRingOutlineThickness;
+            if (ImGui.SliderFloat("Outline Thickness", ref outlineThickness, 0f, 10f, "%.1f")) Configuration.JobRingOutlineThickness = outlineThickness;
+            HoverTooltip("Thickness of the black outline and segment borders.");
+
+            var radius = Configuration.JobRingRadius;
+            if (ImGui.SliderFloat("Ring Radius", ref radius, 10f, 200f, "%.1f")) Configuration.JobRingRadius = radius;
+            HoverTooltip("Adjust to match the colored texture's radius.");
+
+            var width = Configuration.JobRingWidth;
+            if (ImGui.SliderFloat("Ring Width", ref width, 1f, 100f, "%.1f")) Configuration.JobRingWidth = width;
+            HoverTooltip("Adjust to match the colored texture's thickness.");
+
+            var startAngle = Configuration.JobRingStartAngle;
+            if (ImGui.SliderFloat("Start Angle", ref startAngle, 0f, 360f, "%.1f")) Configuration.JobRingStartAngle = startAngle;
+            HoverTooltip("Starting angle of the ring (180 = Left/9 o'clock).");
+
+            ImGui.EndTabItem();
+        }
+
         private void ClassSettings()
         {
             if (!ImGui.BeginTabItem("Class Info")) return;
@@ -751,6 +797,7 @@ namespace KingdomHeartsPlugin
                     HealthSettings();
                     ResourceSettings();
                     LimitSettings();
+                    JobRingSettings();
                     ClassSettings();
                     PortraitSettings();
                     SoundSettings();

@@ -1,34 +1,15 @@
 using System;
-using System.IO;
 using System.Numerics;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.JobGauge.Types;
 using Dalamud.Bindings.ImGui;
-using KingdomHeartsPlugin.Utilities;
-using Dalamud.Interface.Textures;
 
-namespace KingdomHeartsPlugin.UIElements.JobRing
+namespace KingdomHeartsPlugin.UIElements.JobRingNS
 {
     public class JobRing : IDisposable
     {
-        private Ring _gaugeBgRing;
-        private Ring _gaugePrimaryRing;
-        private Ring _gaugeSecondaryRing;
-        private Ring _gaugeOutlineRing;
-
-        private ISharedImmediateTexture BaseEdge => ImageDrawing.GetSharedTexture(Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_base_edge.png"));
-        private ISharedImmediateTexture EndEdge => ImageDrawing.GetSharedTexture(Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_end_edge.png"));
-
         public JobRing()
         {
-            var bgColor = new Vector3(0.07843f, 0.07843f, 0.0745f);
-            string tex = Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_value_segment.png");
-            string outlineTex = Path.Combine(KingdomHeartsPlugin.TemplateLocation, @"Textures\HealthBar\ring_outline_segment.png");
-            
-            _gaugeBgRing = new Ring(tex, bgColor.X, bgColor.Y, bgColor.Z, 0.5f);
-            _gaugePrimaryRing = new Ring(tex, 1f, 1f, 1f, 1f);
-            _gaugeSecondaryRing = new Ring(tex, 1f, 1f, 1f, 1f);
-            _gaugeOutlineRing = new Ring(outlineTex, 1f, 1f, 1f, 1f);
         }
 
         public void Draw(IPlayerCharacter player, float scale, float wobbledY)
@@ -171,39 +152,65 @@ namespace KingdomHeartsPlugin.UIElements.JobRing
             primaryPercent = Math.Clamp(primaryPercent, 0f, 1f);
             secondaryPercent = Math.Clamp(secondaryPercent, 0f, 1f);
 
-            // Always draw BG & Outline borders
-            _gaugeBgRing.Draw(drawList, 1f, drawPosition, 3, newScale);
-            _gaugeOutlineRing.Draw(drawList, 1f, drawPosition, 3, newScale);
+            float startAngle = config.JobRingStartAngle * (float)Math.PI / 180f; 
+            float maxAngle = 270f * (float)Math.PI / 180f; 
+            
+            float thickness = config.JobRingOutlineThickness * newScale;
+            float radius = config.JobRingRadius * newScale;
+            float width = config.JobRingWidth * newScale;
+            
+            float innerRadius = radius - width / 2f;
+            float outerRadius = radius + width / 2f;
+            
+            float size = 256f * newScale;
+            Vector2 center = drawPosition + new Vector2(size / 2f, size / 2f);
+            
+            uint outlineColor = ImGui.GetColorU32(new Vector4(0, 0, 0, 1));
+            uint bgColor = ImGui.GetColorU32(new Vector4(0.07843f, 0.07843f, 0.0745f, 0.5f));
 
+            // Bypass window clipping to prevent cutoff at top and left
+            drawList.PushClipRect(new Vector2(-8192.0f, -8192.0f), new Vector2(8192.0f, 8192.0f), false);
+
+            // Background Ring Fill
+            drawList.PathArcTo(center, radius, startAngle, startAngle + maxAngle, 64);
+            drawList.PathStroke(bgColor, ImDrawFlags.None, width);
+
+            // Primary Ring Fill
             if (primaryPercent > 0)
             {
-                _gaugePrimaryRing.Color = primaryColor;
-                _gaugePrimaryRing.Draw(drawList, primaryPercent, drawPosition, 3, newScale);
-            }
-            if (secondaryPercent > 0 && showSecondary)
-            {
-                _gaugeSecondaryRing.Color = secondaryColor;
-                _gaugeSecondaryRing.Draw(drawList, secondaryPercent, drawPosition, 3, newScale * 0.98f);
+                float primaryAngle = startAngle + (maxAngle * primaryPercent);
+                drawList.PathArcTo(center, radius, startAngle, primaryAngle, 64);
+                drawList.PathStroke(ImGui.GetColorU32(new Vector4(primaryColor, 1f)), ImDrawFlags.None, width);
             }
 
-            // Draw Caps & Segments
-            var baseTex = BaseEdge?.GetWrapOrEmpty();
-            var endTex = EndEdge?.GetWrapOrEmpty();
-            
-            if (baseTex != null && baseTex.Handle != IntPtr.Zero)
+            // Secondary Ring Fill (drawn slightly thinner on the interior logic overlay)
+            if (secondaryPercent > 0 && showSecondary)
             {
-                float size = 256f * newScale;
-                Vector2 center = drawPosition + new Vector2(size / 2f, size / 2f);
+                float secondaryAngle = startAngle + (maxAngle * secondaryPercent);
+                float secWidth = width * 0.6f;
+                drawList.PathArcTo(center, radius, startAngle, secondaryAngle, 64);
+                drawList.PathStroke(ImGui.GetColorU32(new Vector4(secondaryColor, 1f)), ImDrawFlags.None, secWidth);
+            }
+
+            if (thickness > 0)
+            {
+                // Inner and Outer Arcs
+                drawList.PathArcTo(center, innerRadius, startAngle, startAngle + maxAngle, 64);
+                drawList.PathStroke(outlineColor, ImDrawFlags.None, thickness);
                 
-                // Base Cap at 0%
-                drawList.AddImage(baseTex.Handle, drawPosition, drawPosition + new Vector2(size, size));
+                drawList.PathArcTo(center, outerRadius, startAngle, startAngle + maxAngle, 64);
+                drawList.PathStroke(outlineColor, ImDrawFlags.None, thickness);
                 
-                // Current Progress Cap
-                if (endTex != null && endTex.Handle != IntPtr.Zero)
-                {
-                    float angle = primaryPercent * 0.75f * (float)Math.PI * 2;
-                    ImageDrawing.ImageRotated(drawList, endTex.Handle, center, new Vector2(size, size), angle);
-                }
+                // Start Cap
+                Vector2 startP1 = center + new Vector2((float)Math.Cos(startAngle), (float)Math.Sin(startAngle)) * innerRadius;
+                Vector2 startP2 = center + new Vector2((float)Math.Cos(startAngle), (float)Math.Sin(startAngle)) * outerRadius;
+                drawList.AddLine(startP1, startP2, outlineColor, thickness);
+                
+                // End Cap
+                float endAngle = startAngle + maxAngle;
+                Vector2 endP1 = center + new Vector2((float)Math.Cos(endAngle), (float)Math.Sin(endAngle)) * innerRadius;
+                Vector2 endP2 = center + new Vector2((float)Math.Cos(endAngle), (float)Math.Sin(endAngle)) * outerRadius;
+                drawList.AddLine(endP1, endP2, outlineColor, thickness);
 
                 // Internal stock visual segments
                 if (config.JobRingShowSegments && maxSegments > 1)
@@ -211,22 +218,19 @@ namespace KingdomHeartsPlugin.UIElements.JobRing
                     for (int i = 1; i < maxSegments; i++)
                     {
                         float segPercent = (float)i / maxSegments;
-                        float segAngle = segPercent * 0.75f * (float)Math.PI * 2;
-                        
-                        if (endTex != null && endTex.Handle != IntPtr.Zero)
-                            ImageDrawing.ImageRotated(drawList, endTex.Handle, center, new Vector2(size, size), segAngle);
-                        ImageDrawing.ImageRotated(drawList, baseTex.Handle, center, new Vector2(size, size), segAngle);
+                        float segAngle = startAngle + segPercent * maxAngle;
+                        Vector2 segP1 = center + new Vector2((float)Math.Cos(segAngle), (float)Math.Sin(segAngle)) * innerRadius;
+                        Vector2 segP2 = center + new Vector2((float)Math.Cos(segAngle), (float)Math.Sin(segAngle)) * outerRadius;
+                        drawList.AddLine(segP1, segP2, outlineColor, thickness);
                     }
                 }
             }
+
+            drawList.PopClipRect();
         }
 
         public void Dispose()
         {
-            _gaugeBgRing?.Dispose();
-            _gaugePrimaryRing?.Dispose();
-            _gaugeSecondaryRing?.Dispose();
-            _gaugeOutlineRing?.Dispose();
         }
     }
 }

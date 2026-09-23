@@ -30,7 +30,8 @@ namespace KingdomHeartsPlugin.UIElements
             Vector2 center = position + new Vector2(halfSize, halfSize);
             uint color = ImGui.GetColorU32(new Vector4(Color.X, Color.Y, Color.Z, Alpha));
 
-            float bleed = 32f * scale;
+            // Increased bleed to match halfSize to prevent cutoff when the texture rotates bounds
+            float bleed = halfSize;
 
             // Quadrant clip boundaries defined around origin (Top-Left, Top-Right, Bottom-Right, Bottom-Left)
             Span<Vector4> quadrantClips = stackalloc Vector4[4]

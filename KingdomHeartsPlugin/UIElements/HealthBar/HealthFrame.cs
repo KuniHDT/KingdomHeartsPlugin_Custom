@@ -20,7 +20,8 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         private LimitGauge? _limitGauge;
         private ResourceBar? _resourceBar;
         private ClassBar? _expBar;
-        private global::KingdomHeartsPlugin.UIElements.JobRing.JobRing? _jobRing;
+
+        private global::KingdomHeartsPlugin.UIElements.JobRingNS.JobRing? _jobRing;
 
         public HealthFrame()
         {
@@ -40,7 +41,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             _limitGauge = new LimitGauge();
             _resourceBar = new ResourceBar();
             _expBar = new ClassBar();
-            _jobRing = new global::KingdomHeartsPlugin.UIElements.JobRing.JobRing();
+            _jobRing = new global::KingdomHeartsPlugin.UIElements.JobRingNS.JobRing();
         }
 
         public unsafe void Draw()

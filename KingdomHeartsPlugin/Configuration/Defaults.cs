@@ -168,6 +168,21 @@ namespace KingdomHeartsPlugin.Configuration
 
         #endregion
 
+        #region Job Ring
+
+        public const bool JobRingEnabled = true;
+        public const float JobRingScaleMultiplier = 1.15f;
+        public const float JobRingOffsetX = 0f;
+        public const float JobRingOffsetY = 0f;
+        public const bool JobRingShowSegments = true;
+
+        public const float JobRingOutlineThickness = 3.0f;
+        public const float JobRingRadius = 98.0f;
+        public const float JobRingWidth = 28.0f;
+        public const float JobRingStartAngle = 180f;
+
+        #endregion
+
         #region Experience
 
         public const bool ExpBarEnabled  = true;

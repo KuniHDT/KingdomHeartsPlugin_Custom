@@ -173,8 +173,23 @@ namespace KingdomHeartsPlugin.Configuration
 
         #endregion
 
+        #region Job Ring
+
+        public bool JobRingEnabled { get; set; } = Defaults.JobRingEnabled;
+        public float JobRingScaleMultiplier { get; set; } = Defaults.JobRingScaleMultiplier;
+        public float JobRingOffsetX { get; set; } = Defaults.JobRingOffsetX;
+        public float JobRingOffsetY { get; set; } = Defaults.JobRingOffsetY;
+        public bool JobRingShowSegments { get; set; } = Defaults.JobRingShowSegments;
+
+        public float JobRingOutlineThickness { get; set; } = Defaults.JobRingOutlineThickness;
+        public float JobRingRadius { get; set; } = Defaults.JobRingRadius;
+        public float JobRingWidth { get; set; } = Defaults.JobRingWidth;
+        public float JobRingStartAngle { get; set; } = Defaults.JobRingStartAngle;
+
+        #endregion
+
         #region Experience
-        
+
         public bool ExpBarEnabled { get; set; } = Defaults.ExpBarEnabled;
         public bool ExpValueTextEnabled { get; set; } = Defaults.ExpValueTextEnabled;
         public float ExpValueTextSize { get; set; } = Defaults.ExpValueTextSize;
