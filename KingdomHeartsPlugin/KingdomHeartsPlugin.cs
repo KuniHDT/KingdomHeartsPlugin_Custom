@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.Command;
+using Dalamud.Game.Command;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -31,7 +31,8 @@ namespace KingdomHeartsPlugin
             IDataManager dataManager,
             ITextureProvider textureProvider,
             IPluginLog pluginLog,
-            IObjectTable objectTable
+            IObjectTable objectTable,
+            IJobGauges jobGauges
             )
         {
             Pi = pluginInterface;
@@ -43,6 +44,7 @@ namespace KingdomHeartsPlugin
             Tp = textureProvider;
             Pl = pluginLog;
             Ot = objectTable;
+            Jg = jobGauges;
 
 
             Timer = Stopwatch.StartNew();
@@ -177,6 +179,7 @@ namespace KingdomHeartsPlugin
         public static IPluginLog Pl { get; private set; } = null!;
         public static ITextureProvider Tp { get; private set; } = null!;
         public static IObjectTable Ot { get; private set; } = null!;
+        public static IJobGauges Jg { get; private set; } = null!;
         public static PluginUI Ui { get; private set; } = null!;
 
         public static Stopwatch? Timer { get; private set; }

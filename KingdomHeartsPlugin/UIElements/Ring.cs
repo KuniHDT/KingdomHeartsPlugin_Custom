@@ -30,13 +30,15 @@ namespace KingdomHeartsPlugin.UIElements
             Vector2 center = position + new Vector2(halfSize, halfSize);
             uint color = ImGui.GetColorU32(new Vector4(Color.X, Color.Y, Color.Z, Alpha));
 
+            float bleed = 32f * scale;
+
             // Quadrant clip boundaries defined around origin (Top-Left, Top-Right, Bottom-Right, Bottom-Left)
             Span<Vector4> quadrantClips = stackalloc Vector4[4]
             {
-                new(position.X, position.Y, position.X + halfSize + 0.5f, position.Y + halfSize + 0.5f),
-                new(position.X + halfSize - 0.5f, position.Y, position.X + size + 0.5f, position.Y + halfSize + 0.5f),
-                new(position.X + halfSize - 0.5f, position.Y + halfSize - 0.5f, position.X + size + 0.5f, position.Y + size + 0.5f),
-                new(position.X - 0.5f, position.Y + halfSize - 0.5f, position.X + halfSize + 0.5f, position.Y + size + 0.5f)
+                new(position.X - bleed, position.Y - bleed, position.X + halfSize + 0.5f, position.Y + halfSize + 0.5f),
+                new(position.X + halfSize - 0.5f, position.Y - bleed, position.X + size + bleed, position.Y + halfSize + 0.5f),
+                new(position.X + halfSize - 0.5f, position.Y + halfSize - 0.5f, position.X + size + bleed, position.Y + size + bleed),
+                new(position.X - bleed, position.Y + halfSize - 0.5f, position.X + halfSize + 0.5f, position.Y + size + bleed)
             };
 
             const float stepPerSegment = 0.25f;
@@ -52,7 +54,9 @@ namespace KingdomHeartsPlugin.UIElements
                 float angle = (-0.25f + clampedProgress) * MathF.PI * 2f;
 
                 Vector4 clip = quadrantClips[i];
-                drawList.PushClipRect(new Vector2(clip.X, clip.Y), new Vector2(clip.Z, clip.W), true);
+                
+                // Set the third parameter to false so that it explicitly bypasses ImGui's window bounding box
+                drawList.PushClipRect(new Vector2(clip.X, clip.Y), new Vector2(clip.Z, clip.W), false);
 
                 ImageDrawing.ImageRotated(
                     drawList,

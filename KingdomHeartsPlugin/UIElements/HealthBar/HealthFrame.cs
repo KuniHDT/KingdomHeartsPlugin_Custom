@@ -20,6 +20,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
         private LimitGauge? _limitGauge;
         private ResourceBar? _resourceBar;
         private ClassBar? _expBar;
+        private global::KingdomHeartsPlugin.UIElements.JobRing.JobRing? _jobRing;
 
         public HealthFrame()
         {
@@ -39,6 +40,7 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             _limitGauge = new LimitGauge();
             _resourceBar = new ResourceBar();
             _expBar = new ClassBar();
+            _jobRing = new global::KingdomHeartsPlugin.UIElements.JobRing.JobRing();
         }
 
         public unsafe void Draw()
@@ -61,6 +63,9 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             if (ImGui.GetDrawListSharedData().IsNull) return;
 
             ImGui.Dummy(new Vector2(220, 256));
+
+            // Shifted above the HealthBar routine so it renders underneath it
+            _jobRing?.Draw(player, KingdomHeartsPlugin.Ui.Configuration.Scale, HealthY * KingdomHeartsPlugin.Ui.Configuration.HpDamageWobbleIntensity / 100f);
 
             if (KingdomHeartsPlugin.Ui.Configuration.HpBarEnabled)
             {
@@ -651,10 +656,12 @@ namespace KingdomHeartsPlugin.UIElements.HealthBar
             _limitGauge?.Dispose();
             _resourceBar?.Dispose();
             _expBar?.Dispose();
+            _jobRing?.Dispose();
 
             _limitGauge = null;
             _resourceBar = null;
             _expBar = null;
+            _jobRing = null;
             HealthRing = null;
             HealthRingBg = null;
             RingOutline = null;
