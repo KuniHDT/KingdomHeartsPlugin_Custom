@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Bindings.ImGui;
 using KingdomHeartsPlugin.Utilities;
 using System;
@@ -10,28 +10,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace KingdomHeartsPlugin.Configuration
 {
-    public partial class Defaults
-    {
-        public const float LevelTextX = 132;
-        public const float LevelTextY = 81;
-        public const float LevelTextSize = 32;
-        public const TextAlignment LevelTextAlignment = TextAlignment.Center;
 
-        public const float ClassIconX = 128;
-        public const float ClassIconY = 150;
-        public const float ClassIconScale = 1.0f;
-    }
-
-    public partial class Settings
-    {
-        public float LevelTextX { get; set; } = Defaults.LevelTextX;
-        public float LevelTextY { get; set; } = Defaults.LevelTextY;
-        public float LevelTextSize { get; set; } = Defaults.LevelTextSize;
-        public TextAlignment LevelTextAlignment { get; set; } = Defaults.LevelTextAlignment;
-        public float ClassIconX { get; set; } = Defaults.ClassIconX;
-        public float ClassIconY { get; set; } = Defaults.ClassIconY;
-        public float ClassIconScale { get; set; } = Defaults.ClassIconScale;
-    }
 }
 
 namespace KingdomHeartsPlugin.UIElements.Experience

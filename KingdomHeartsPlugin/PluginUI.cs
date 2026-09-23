@@ -622,7 +622,20 @@ namespace KingdomHeartsPlugin
             }
 
             ImGui.Spacing();
-            SectionHeader("Vector Outline & Segments");
+            SectionHeader("Vector Outline, Arc & Segments");
+
+            var wrapFull = Configuration.JobRingWrapFull;
+            if (ImGui.Checkbox("Wrap Fully Around Health Ring", ref wrapFull)) Configuration.JobRingWrapFull = wrapFull;
+            HoverTooltip("When enabled, the Job Ring arc spans the full 270-degree length of the health ring.");
+
+            if (!Configuration.JobRingWrapFull)
+            {
+                ImGui.Indent();
+                var maxAngle = Configuration.JobRingMaxAngle;
+                if (ImGui.SliderFloat("Custom Wrap Angle (Degrees)", ref maxAngle, 10f, 360f, "%.1f")) Configuration.JobRingMaxAngle = maxAngle;
+                HoverTooltip("Custom arc length in degrees over which the Job Ring and its segments scale.");
+                ImGui.Unindent();
+            }
 
             var showSegments = Configuration.JobRingShowSegments;
             if (ImGui.Checkbox("Show Segments", ref showSegments)) Configuration.JobRingShowSegments = showSegments;
@@ -643,6 +656,17 @@ namespace KingdomHeartsPlugin
             var startAngle = Configuration.JobRingStartAngle;
             if (ImGui.SliderFloat("Start Angle", ref startAngle, 0f, 360f, "%.1f")) Configuration.JobRingStartAngle = startAngle;
             HoverTooltip("Starting angle of the ring (180 = Left/9 o'clock).");
+
+            ImGui.Spacing();
+            SectionHeader("Animation");
+            var animEnabled = Configuration.JobRingAnimationEnabled;
+            if (ImGui.Checkbox("Enable Animation", ref animEnabled)) Configuration.JobRingAnimationEnabled = animEnabled;
+            var animSpeed = Configuration.JobRingAnimationSpeed;
+            if (ImGui.SliderFloat("Animation Speed (%/s)##JobRing", ref animSpeed, 10f, 200f)) Configuration.JobRingAnimationSpeed = animSpeed;
+            var animDelay = Configuration.JobRingAnimationDelay;
+            if (ImGui.SliderFloat("Animation Delay (s)##JobRing", ref animDelay, 0f, 3f)) Configuration.JobRingAnimationDelay = animDelay;
+            var trail = Configuration.JobRingShowDamageTrail;
+            if (ImGui.Checkbox("Show Damage Trail", ref trail)) Configuration.JobRingShowDamageTrail = trail;
 
             ImGui.EndTabItem();
         }

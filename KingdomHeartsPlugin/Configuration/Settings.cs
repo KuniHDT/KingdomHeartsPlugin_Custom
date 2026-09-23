@@ -55,6 +55,7 @@ namespace KingdomHeartsPlugin.Configuration
         public int ShieldFillDirection { get; set; } = Defaults.ShieldFillDirection;
 
         public bool EnableRoleHpMultipliers { get; set; } = Defaults.EnableRoleHpMultipliers;
+
         public float TankHpMultiplier { get; set; } = Defaults.TankHpMultiplier;
         public bool EnableTankJobHpMultipliers { get; set; } = Defaults.EnableTankJobHpMultipliers;
         public float PldHpMultiplier { get; set; } = Defaults.PldHpMultiplier;
@@ -120,7 +121,7 @@ namespace KingdomHeartsPlugin.Configuration
         public bool ShowResourceRecovery { get; set; } = Defaults.ShowResourceRecovery;
         public float ResourceAnimationSpeed { get; set; } = Defaults.ResourceAnimationSpeed;
         public float ResourceAnimationDelay { get; set; } = Defaults.ResourceAnimationDelay;
-        
+
         public bool EnableRoleResourceMultipliers { get; set; } = Defaults.EnableRoleResourceMultipliers;
         public float TankResourceMultiplier { get; set; } = Defaults.TankResourceMultiplier;
         public bool EnableTankJobResourceMultipliers { get; set; } = Defaults.EnableTankJobResourceMultipliers;
@@ -158,7 +159,7 @@ namespace KingdomHeartsPlugin.Configuration
         public float BluResourceMultiplier { get; set; } = Defaults.BluResourceMultiplier;
 
         public float OtherResourceMultiplier { get; set; } = Defaults.OtherResourceMultiplier;
-        
+
         public Vector4 ResourceSpentColor { get; set; } = Defaults.ResourceSpentColor;
         public Vector4 ResourceRecoveredColor { get; set; } = Defaults.ResourceRecoveredColor;
         #endregion
@@ -180,6 +181,14 @@ namespace KingdomHeartsPlugin.Configuration
         public float JobRingOffsetX { get; set; } = Defaults.JobRingOffsetX;
         public float JobRingOffsetY { get; set; } = Defaults.JobRingOffsetY;
         public bool JobRingShowSegments { get; set; } = Defaults.JobRingShowSegments;
+        public bool JobRingWrapFull { get; set; } = Defaults.JobRingWrapFull;
+        public float JobRingMaxAngle { get; set; } = Defaults.JobRingMaxAngle;
+
+        // Animation settings
+        public bool JobRingAnimationEnabled { get; set; } = Defaults.JobRingAnimationEnabled;
+        public float JobRingAnimationSpeed { get; set; } = Defaults.JobRingAnimationSpeed;
+        public float JobRingAnimationDelay { get; set; } = Defaults.JobRingAnimationDelay;
+        public bool JobRingShowDamageTrail { get; set; } = Defaults.JobRingShowDamageTrail;
 
         public float JobRingOutlineThickness { get; set; } = Defaults.JobRingOutlineThickness;
         public float JobRingRadius { get; set; } = Defaults.JobRingRadius;
@@ -204,6 +213,16 @@ namespace KingdomHeartsPlugin.Configuration
 
         public bool LevelEnabled { get; set; } = Defaults.LevelEnabled;
         public bool ClassIconEnabled { get; set; } = Defaults.ClassIconEnabled;
+
+        public float LevelTextX { get; set; } = Defaults.LevelTextX;
+        public float LevelTextY { get; set; } = Defaults.LevelTextY;
+        public float LevelTextSize { get; set; } = Defaults.LevelTextSize;
+        public TextAlignment LevelTextAlignment { get; set; } = Defaults.LevelTextAlignment;
+        public float LevelTextScale { get; set; } = Defaults.LevelTextScale;
+
+        public float ClassIconX { get; set; } = Defaults.ClassIconX;
+        public float ClassIconY { get; set; } = Defaults.ClassIconY;
+        public float ClassIconScale { get; set; } = Defaults.ClassIconScale;
 
         #endregion
 

@@ -175,6 +175,12 @@ namespace KingdomHeartsPlugin.Configuration
         public const float JobRingOffsetX = 0f;
         public const float JobRingOffsetY = 0f;
         public const bool JobRingShowSegments = true;
+        public const bool JobRingWrapFull = true;
+        public const float JobRingMaxAngle = 270f;
+        public const bool JobRingAnimationEnabled = true;
+        public const float JobRingAnimationSpeed = 50f;
+        public const float JobRingAnimationDelay = 1.0f;
+        public const bool JobRingShowDamageTrail = true;
 
         public const float JobRingOutlineThickness = 3.0f;
         public const float JobRingRadius = 98.0f;
@@ -197,7 +203,16 @@ namespace KingdomHeartsPlugin.Configuration
 
         #region ClassInfo
 
-        public const bool LevelEnabled  = true;
+        public const bool LevelEnabled = true;
+        public const float LevelTextX = 132f;
+        public const float LevelTextY = 81f;
+        public const float LevelTextSize = 32f;
+        public const TextAlignment LevelTextAlignment = TextAlignment.Center;
+        public const float LevelTextScale = 1f;
+
+        public const float ClassIconX = 128f;
+        public const float ClassIconY = 150f;
+        public const float ClassIconScale = 1.0f;
         public const bool ClassIconEnabled  = true;
 
         #endregion
